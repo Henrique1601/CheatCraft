@@ -27,9 +27,18 @@ class CheatCraftApp(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("⚡ CheatCraft Studio v4.0 Ultimate // Mega Catálogo AAA & Mod Studio")
+        self.title("⚡ CheatCraft Studio v4.5 // Mega Catálogo AAA & Mod Studio")
         self.geometry("1140x760")
         self.minsize(1020, 680)
+
+        # Temas Visuais
+        self.themes = {
+            "Cyberpunk Neon": {"accent": "#00d2ff", "hover": "#0099cc", "sidebar": ("#141422", "#0d0d16"), "main": ("#1b1b28", "#12121c")},
+            "Matrix Emerald": {"accent": "#00ff66", "hover": "#00cc52", "sidebar": ("#0f1f14", "#0a140d"), "main": ("#122417", "#0d1a11")},
+            "Blood Red": {"accent": "#ff3344", "hover": "#cc2936", "sidebar": ("#221414", "#160d0d"), "main": ("#281b1b", "#1c1212")},
+            "Royal Purple": {"accent": "#b84dff", "hover": "#943ecf", "sidebar": ("#1d1429", "#130d1c"), "main": ("#221833", "#171024")},
+        }
+        self.current_theme_name = "Cyberpunk Neon"
 
         # Estados e Dados
         self.presets = self._load_presets()
@@ -83,18 +92,21 @@ class CheatCraftApp(ctk.CTk):
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        # ------------------- SIDEBAR ESQUERDA -------------------
-        sidebar = ctk.CTkFrame(self, width=310, corner_radius=0, fg_color=("#141422", "#0d0d16"))
-        sidebar.grid(row=0, column=0, sticky="nsew", padx=0, pady=0)
-        sidebar.grid_propagate(False)
+        theme_data = self.themes[self.current_theme_name]
 
-        logo_lbl = ctk.CTkLabel(
+        # ------------------- SIDEBAR ESQUERDA -------------------
+        self.sidebar_frame = ctk.CTkFrame(self, width=310, corner_radius=0, fg_color=theme_data["sidebar"])
+        self.sidebar_frame.grid(row=0, column=0, sticky="nsew", padx=0, pady=0)
+        self.sidebar_frame.grid_propagate(False)
+        sidebar = self.sidebar_frame
+
+        self.logo_lbl = ctk.CTkLabel(
             sidebar,
             text="⚡ CHEATCRAFT",
             font=ctk.CTkFont(size=22, weight="bold"),
-            text_color="#00d2ff"
+            text_color=theme_data["accent"]
         )
-        logo_lbl.pack(pady=(18, 2), padx=20, anchor="w")
+        self.logo_lbl.pack(pady=(18, 2), padx=20, anchor="w")
 
         sub_logo = ctk.CTkLabel(
             sidebar,
@@ -102,7 +114,25 @@ class CheatCraftApp(ctk.CTk):
             font=ctk.CTkFont(size=11),
             text_color="#7b7b99"
         )
-        sub_logo.pack(pady=(0, 12), padx=20, anchor="w")
+        sub_logo.pack(pady=(0, 8), padx=20, anchor="w")
+
+        # Seletor de Tema Visual
+        theme_bar = ctk.CTkFrame(sidebar, fg_color="transparent")
+        theme_bar.pack(fill="x", padx=20, pady=(0, 8))
+
+        theme_lbl = ctk.CTkLabel(theme_bar, text="🎨 Skin:", font=ctk.CTkFont(size=11, weight="bold"), text_color="#8888aa")
+        theme_lbl.pack(side="left")
+
+        self.theme_combo = ctk.CTkComboBox(
+            theme_bar,
+            values=list(self.themes.keys()),
+            width=180,
+            height=26,
+            font=ctk.CTkFont(size=11),
+            command=self._on_theme_changed
+        )
+        self.theme_combo.set(self.current_theme_name)
+        self.theme_combo.pack(side="right")
 
         # Botão Importar .CT da Internet
         import_btn = ctk.CTkButton(
@@ -179,10 +209,11 @@ class CheatCraftApp(ctk.CTk):
         scan_btn.pack(padx=20, pady=(4, 16), fill="x")
 
         # ------------------- CONTEÚDO PRINCIPAL (DIREITA) -------------------
-        main_content = ctk.CTkFrame(self, fg_color=("#1b1b28", "#12121c"), corner_radius=0)
-        main_content.grid(row=0, column=1, sticky="nsew", padx=0, pady=0)
-        main_content.grid_columnconfigure(0, weight=1)
-        main_content.grid_rowconfigure(3, weight=1)
+        self.main_content_frame = ctk.CTkFrame(self, fg_color=theme_data["main"], corner_radius=0)
+        self.main_content_frame.grid(row=0, column=1, sticky="nsew", padx=0, pady=0)
+        self.main_content_frame.grid_columnconfigure(0, weight=1)
+        self.main_content_frame.grid_rowconfigure(3, weight=1)
+        main_content = self.main_content_frame
 
         # Top Bar: Status do Jogo Selecionado
         top_bar = ctk.CTkFrame(main_content, fg_color=("#222234", "#1a1a27"), corner_radius=12)
@@ -286,6 +317,24 @@ class CheatCraftApp(ctk.CTk):
             fg_color=("#171724", "#101019")
         )
         self.cheats_container.grid(row=3, column=0, sticky="nsew", padx=20, pady=(4, 16))
+        self._render_cheats_list()
+
+    def _on_theme_changed(self, new_theme):
+        """Altera a paleta visual completa da aplicação dinamicamente."""
+        if new_theme not in self.themes:
+            return
+        self.current_theme_name = new_theme
+        theme = self.themes[new_theme]
+
+        self.sidebar_frame.configure(fg_color=theme["sidebar"])
+        self.main_content_frame.configure(fg_color=theme["main"])
+        self.logo_lbl.configure(text_color=theme["accent"])
+
+        # Atualiza a cor de destaque no HUD se estiver aberto
+        if self.hud:
+            self.hud.crosshair_color = theme["accent"]
+
+        self._render_game_list()
         self._render_cheats_list()
 
     def _on_search_changed(self, event=None):

@@ -1,0 +1,4 @@
+customtkinter>=5.2.0
+pymem>=1.14.0
+keyboard>=0.13.5
+darkdetect>=0.8.0

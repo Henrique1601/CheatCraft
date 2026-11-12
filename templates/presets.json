@@ -1,0 +1,115 @@
+{
+  "presets": [
+    {
+      "id": "spiderman",
+      "game_name": "Marvel's Spider-Man Remastered",
+      "process_name": "spiderman.exe",
+      "cheats": [
+        {
+          "id": "god_mode",
+          "description": "God Mode (Vida Infinita)",
+          "type": "Float",
+          "default_value": 1000.0,
+          "address": "\"spiderman.exe\"+01B4D200",
+          "offsets": [72, 16, 0],
+          "hotkey": "NUMPAD 1"
+        },
+        {
+          "id": "infinite_focus",
+          "description": "Foco Infinito / Finalizadores Instantâneos",
+          "type": "Float",
+          "default_value": 100.0,
+          "address": "\"spiderman.exe\"+01B4D200",
+          "offsets": [72, 16, 16],
+          "hotkey": "NUMPAD 2"
+        },
+        {
+          "id": "infinite_gadgets",
+          "description": "Munição de Dispositivos / Teias Infinita",
+          "type": "4 Bytes",
+          "default_value": 99,
+          "address": "\"spiderman.exe\"+01A2C100",
+          "offsets": [32, 8, 4],
+          "hotkey": "NUMPAD 3"
+        },
+        {
+          "id": "max_combo",
+          "description": "Multiplicador de Combo 999x",
+          "type": "4 Bytes",
+          "default_value": 999,
+          "address": "\"spiderman.exe\"+01A2C100",
+          "offsets": [32, 8, 12],
+          "hotkey": "NUMPAD 4"
+        },
+        {
+          "id": "speedhack",
+          "description": "Super Velocidade de Movimento (Speedhack)",
+          "type": "Float",
+          "default_value": 2.5,
+          "address": "\"spiderman.exe\"+0183F500",
+          "offsets": [16, 4],
+          "hotkey": "NUMPAD 5"
+        }
+      ]
+    },
+    {
+      "id": "generic_unity",
+      "game_name": "Template Genérico (Jogos Unity / Mono)",
+      "process_name": "UnityGame.exe",
+      "cheats": [
+        {
+          "id": "infinite_health",
+          "description": "Vida Infinita (Player Health)",
+          "type": "Float",
+          "default_value": 9999.0,
+          "address": "\"UnityPlayer.dll\"+012A3400",
+          "offsets": [56, 32, 0],
+          "hotkey": "NUMPAD 1"
+        },
+        {
+          "id": "infinite_currency",
+          "description": "Dinheiro / Ouro / Moedas Ilimitadas",
+          "type": "4 Bytes",
+          "default_value": 999999,
+          "address": "\"UnityPlayer.dll\"+012A3400",
+          "offsets": [56, 32, 8],
+          "hotkey": "NUMPAD 2"
+        },
+        {
+          "id": "infinite_stamina",
+          "description": "Stamina / Energia Infinita",
+          "type": "Float",
+          "default_value": 100.0,
+          "address": "\"UnityPlayer.dll\"+012A3400",
+          "offsets": [56, 32, 16],
+          "hotkey": "NUMPAD 3"
+        }
+      ]
+    },
+    {
+      "id": "generic_unreal",
+      "game_name": "Template Genérico (Unreal Engine 4/5)",
+      "process_name": "UnrealGame-Win64-Shipping.exe",
+      "cheats": [
+        {
+          "id": "god_mode",
+          "description": "Invulnerabilidade (God Mode)",
+          "type": "Float",
+          "default_value": 100.0,
+          "address": "\"UnrealGame-Win64-Shipping.exe\"+03FA0000",
+          "offsets": [48, 16, 0],
+          "hotkey": "NUMPAD 1"
+        },
+        {
+          "id": "infinite_ammo",
+          "description": "Munição Infinita / Sem Recarga",
+          "type": "4 Bytes",
+          "default_value": 999,
+          "address": "\"UnrealGame-Win64-Shipping.exe\"+03FA0000",
+          "offsets": [48, 16, 24],
+          "hotkey": "NUMPAD 2"
+        }
+      ]
+    }
+  ]
+}

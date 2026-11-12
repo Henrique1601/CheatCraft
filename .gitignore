@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+exports/*.ct
+!exports/spiderman_generated.ct
+*.log
+.DS_Store
+Thumbs.db

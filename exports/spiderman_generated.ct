@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="45">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>1</ID>
+      <Description>"God Mode (Vida Infinita)"</Description>
+      <VariableType>Float</VariableType>
+      <Address>"spiderman.exe"+01B4D200</Address>
+      <Offsets>
+        <Offset>48</Offset>
+        <Offset>10</Offset>
+        <Offset>0</Offset>
+      </Offsets>
+      <Hotkeys>
+        <Hotkey>
+          <Action>Toggle Activation</Action>
+          <Keys>
+            <Key>NUMPAD 1</Key>
+          </Keys>
+          <ID>0</ID>
+        </Hotkey>
+      </Hotkeys>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>2</ID>
+      <Description>"Munição de Gadgets"</Description>
+      <VariableType>4 Bytes</VariableType>
+      <Address>"spiderman.exe"+01A2C100</Address>
+      <Offsets>
+        <Offset>20</Offset>
+        <Offset>8</Offset>
+        <Offset>4</Offset>
+      </Offsets>
+      <Hotkeys>
+        <Hotkey>
+          <Action>Toggle Activation</Action>
+          <Keys>
+            <Key>NUMPAD 2</Key>
+          </Keys>
+          <ID>0</ID>
+        </Hotkey>
+      </Hotkeys>
+    </CheatEntry>
+  </CheatEntries>
+  <LuaScript>-- CheatLab Auto-Attach Script
+local process = "spiderman.exe"
+local function checkGame()
+  if getOpenedProcessID() == 0 then
+    openProcess(process)
+  end
+end
+local t = createTimer(nil)
+timer_setInterval(t, 2000)
+timer_onTimer(t, checkGame)
+</LuaScript>
+</CheatTable>

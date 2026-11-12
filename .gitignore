@@ -11,3 +11,6 @@ exports/*.ct
 *.log
 .DS_Store
 Thumbs.db
+
+build/
+dist/

@@ -6,6 +6,7 @@ import customtkinter as ctk
 from tkinter import filedialog, messagebox
 
 from core.ct_generator import CheatTableGenerator
+from core.ct_importer import CheatTableImporter
 from core.game_scanner import GameScanner
 from core.memory_scanner import MemoryScanner
 from core.hud_overlay import InGameHUDOverlay
@@ -23,9 +24,9 @@ class CheatCraftApp(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("⚡ CheatCraft Studio v3.0 Pro // Launcher, Modder & .CT Studio")
-        self.geometry("1100x740")
-        self.minsize(980, 660)
+        self.title("⚡ CheatCraft Studio v4.0 Ultimate // Mega Catálogo AAA & Mod Studio")
+        self.geometry("1140x760")
+        self.minsize(1020, 680)
 
         # Estados e Dados
         self.presets = self._load_presets()
@@ -34,7 +35,7 @@ class CheatCraftApp(ctk.CTk):
         self.active_cheats = {}
         self.was_connected = False
 
-        # Módulos do Core v3.0
+        # Módulos do Core v4.0
         self.mem = MemoryEngine(process_name=self.selected_game["process_name"] if self.selected_game else "")
         self.scanner = MemoryScanner()
         self.hud = InGameHUDOverlay()
@@ -55,12 +56,20 @@ class CheatCraftApp(ctk.CTk):
                 print(f"Erro ao carregar presets: {e}")
         return []
 
+    def _save_presets(self):
+        presets_path = os.path.join(os.path.dirname(__file__), "templates", "presets.json")
+        try:
+            with open(presets_path, "w", encoding="utf-8") as f:
+                json.dump({"presets": self.presets}, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            print(f"Erro ao salvar presets: {e}")
+
     def _build_layout(self):
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
         # ------------------- SIDEBAR ESQUERDA -------------------
-        sidebar = ctk.CTkFrame(self, width=290, corner_radius=0, fg_color=("#141422", "#0d0d16"))
+        sidebar = ctk.CTkFrame(self, width=310, corner_radius=0, fg_color=("#141422", "#0d0d16"))
         sidebar.grid(row=0, column=0, sticky="nsew", padx=0, pady=0)
         sidebar.grid_propagate(False)
 
@@ -74,11 +83,22 @@ class CheatCraftApp(ctk.CTk):
 
         sub_logo = ctk.CTkLabel(
             sidebar,
-            text="Universal Game Modder v3.0 Pro",
+            text=f"Mega Catálogo AAA ({len(self.presets)} Jogos) & .CT Studio",
             font=ctk.CTkFont(size=11),
             text_color="#7b7b99"
         )
-        sub_logo.pack(pady=(0, 14), padx=20, anchor="w")
+        sub_logo.pack(pady=(0, 12), padx=20, anchor="w")
+
+        # Botão Importar .CT da Internet
+        import_btn = ctk.CTkButton(
+            sidebar,
+            text="📥 Importar Tabela .CT da Web",
+            fg_color="#006699",
+            hover_color="#0088cc",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            command=self._import_external_ct
+        )
+        import_btn.pack(padx=20, pady=(0, 6), fill="x")
 
         # Botão Sincronizar Nuvem
         cloud_btn = ctk.CTkButton(
@@ -93,14 +113,14 @@ class CheatCraftApp(ctk.CTk):
         # Título da Seção
         sec_title = ctk.CTkLabel(
             sidebar,
-            text="BIBLIOTECA & EMULADORES",
-            font=ctk.CTkFont(size=12, weight="bold"),
+            text="CATÁLOGO DE JOGOS & EMULADORES",
+            font=ctk.CTkFont(size=11, weight="bold"),
             text_color="#9090b0"
         )
-        sec_title.pack(padx=20, pady=(6, 4), anchor="w")
+        sec_title.pack(padx=20, pady=(4, 2), anchor="w")
 
         self.games_scroll = ctk.CTkScrollableFrame(sidebar, fg_color="transparent")
-        self.games_scroll.pack(fill="both", expand=True, padx=10, pady=5)
+        self.games_scroll.pack(fill="both", expand=True, padx=10, pady=4)
         self._render_game_list()
 
         # Botão AI Assistant
@@ -116,7 +136,7 @@ class CheatCraftApp(ctk.CTk):
         # Botão In-Game HUD
         hud_btn = ctk.CTkButton(
             sidebar,
-            text="🪟 In-Game HUD (Insert)",
+            text="🪟 In-Game HUD + FPS (Insert)",
             fg_color="#332244",
             hover_color="#4d3366",
             command=self._launch_hud
@@ -309,7 +329,6 @@ class CheatCraftApp(ctk.CTk):
         new_val = not curr
         self.active_cheats[cheat_name] = new_val
 
-        # Feedback sonoro sutil
         if new_val:
             SoundFeedback.play_cheat_on()
         else:
@@ -317,6 +336,36 @@ class CheatCraftApp(ctk.CTk):
 
         if self.hud.root:
             self.hud.update_cheats(self.active_cheats)
+
+    def _import_external_ct(self):
+        """Permite selecionar qualquer arquivo .CT baixado da internet e importar os cheats para o catálogo."""
+        file_path = filedialog.askopenfilename(
+            title="Selecionar Tabela do Cheat Engine (.CT)",
+            filetypes=[("Cheat Engine Table", "*.ct"), ("Todos os Arquivos", "*.*")]
+        )
+        if not file_path:
+            return
+
+        parsed_game = CheatTableImporter.parse_ct_file(file_path)
+        if not parsed_game or not parsed_game.get("cheats"):
+            messagebox.showwarning("Importador .CT", "Nenhum cheat válido foi encontrado dentro desta tabela .CT.")
+            return
+
+        # Verifica se já existe um jogo com esse ID ou adiciona
+        existing = next((p for p in self.presets if p["id"] == parsed_game["id"]), None)
+        if existing:
+            existing["cheats"].extend(parsed_game["cheats"])
+            target_game = existing
+        else:
+            self.presets.append(parsed_game)
+            target_game = parsed_game
+
+        self._save_presets()
+        self._select_game(target_game)
+        messagebox.showinfo(
+            "Tabela .CT Importada!",
+            f"O jogo '{target_game['game_name']}' foi importado com {len(parsed_game['cheats'])} cheats com sucesso!"
+        )
 
     def _on_speed_changed(self, val):
         val_rounded = round(val, 2)
@@ -342,7 +391,6 @@ class CheatCraftApp(ctk.CTk):
         messagebox.showinfo("Cloud Hub", f"Sincronização concluída!\nNovos presets adicionados: {added}")
 
     def _open_ai_assistant_modal(self):
-        """Abre modal com análise inteligente e recomendações de engenharia reversa."""
         modal = ctk.CTkToplevel(self)
         modal.title("🤖 AI Cheat Assistant - Análise Estratégica")
         modal.geometry("560x480")
@@ -512,6 +560,7 @@ class CheatCraftApp(ctk.CTk):
             }
 
             self.selected_game["cheats"].append(new_c)
+            self._save_presets()
             self._render_cheats_list()
             modal.destroy()
 

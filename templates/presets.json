@@ -1,55 +1,424 @@
 {
   "presets": [
     {
-      "id": "spiderman",
-      "game_name": "Marvel's Spider-Man Remastered",
-      "engine_type": "Nativo / Custom",
-      "process_name": "spiderman.exe",
+      "id": "gta5",
+      "game_name": "Grand Theft Auto V",
+      "engine_type": "RAGE Engine",
+      "process_name": "GTA5.exe",
       "cheats": [
         {
-          "id": "god_mode",
-          "description": "God Mode (Vida Infinita)",
+          "id": "gta_god",
+          "description": "God Mode (Vida e Colete Infinitos)",
           "type": "Float",
-          "default_value": 1000.0,
-          "address": "\"spiderman.exe\"+01B4D200",
-          "offsets": [72, 16, 0],
+          "default_value": 200.0,
+          "address": "\"GTA5.exe\"+01C3A100",
+          "offsets": [8, 48, 0],
           "hotkey": "NUMPAD 1"
         },
         {
-          "id": "infinite_focus",
-          "description": "Foco Infinito / Finalizadores",
-          "type": "Float",
-          "default_value": 100.0,
-          "address": "\"spiderman.exe\"+01B4D200",
-          "offsets": [72, 16, 16],
+          "id": "gta_ammo",
+          "description": "Munição Infinita / Sem Recarga",
+          "type": "4 Bytes",
+          "default_value": 999,
+          "address": "\"GTA5.exe\"+01C3A100",
+          "offsets": [8, 48, 24],
           "hotkey": "NUMPAD 2"
         },
         {
-          "id": "infinite_gadgets",
-          "description": "Munição de Dispositivos / Teias",
+          "id": "gta_money",
+          "description": "Dinheiro Infinito ($999.999.999)",
           "type": "4 Bytes",
-          "default_value": 99,
-          "address": "\"spiderman.exe\"+01A2C100",
-          "offsets": [32, 8, 4],
+          "default_value": 999999999,
+          "address": "\"GTA5.exe\"+01C3A100",
+          "offsets": [8, 56, 16],
           "hotkey": "NUMPAD 3"
         },
         {
-          "id": "max_combo",
-          "description": "Multiplicador de Combo 999x",
+          "id": "gta_wanted",
+          "description": "Nível de Procurado Zero (Sem Polícia)",
           "type": "4 Bytes",
-          "default_value": 999,
-          "address": "\"spiderman.exe\"+01A2C100",
-          "offsets": [32, 8, 12],
+          "default_value": 0,
+          "address": "\"GTA5.exe\"+01C3A100",
+          "offsets": [8, 64, 4],
           "hotkey": "NUMPAD 4"
+        }
+      ]
+    },
+    {
+      "id": "rdr2",
+      "game_name": "Red Dead Redemption 2",
+      "engine_type": "RAGE Engine",
+      "process_name": "RDR2.exe",
+      "cheats": [
+        {
+          "id": "rdr_god",
+          "description": "Saúde Infinita (Arthur & Cavalo)",
+          "type": "Float",
+          "default_value": 100.0,
+          "address": "\"RDR2.exe\"+02B4C000",
+          "offsets": [64, 16, 0],
+          "hotkey": "NUMPAD 1"
         },
         {
-          "id": "speedhack",
-          "description": "Super Velocidade de Movimento",
+          "id": "rdr_stamina",
+          "description": "Energia / Stamina Infinita",
           "type": "Float",
-          "default_value": 2.5,
-          "address": "\"spiderman.exe\"+0183F500",
-          "offsets": [16, 4],
-          "hotkey": "NUMPAD 5"
+          "default_value": 100.0,
+          "address": "\"RDR2.exe\"+02B4C000",
+          "offsets": [64, 16, 8],
+          "hotkey": "NUMPAD 2"
+        },
+        {
+          "id": "rdr_deadeye",
+          "description": "Dead Eye Ilimitado",
+          "type": "Float",
+          "default_value": 100.0,
+          "address": "\"RDR2.exe\"+02B4C000",
+          "offsets": [64, 16, 16],
+          "hotkey": "NUMPAD 3"
+        },
+        {
+          "id": "rdr_money",
+          "description": "Dinheiro Máximo ($99.999)",
+          "type": "4 Bytes",
+          "default_value": 9999900,
+          "address": "\"RDR2.exe\"+02B4C000",
+          "offsets": [64, 32, 4],
+          "hotkey": "NUMPAD 4"
+        }
+      ]
+    },
+    {
+      "id": "witcher3",
+      "game_name": "The Witcher 3: Wild Hunt",
+      "engine_type": "REDengine 3",
+      "process_name": "witcher3.exe",
+      "cheats": [
+        {
+          "id": "w3_hp",
+          "description": "Geralt Invencível (God Mode)",
+          "type": "Float",
+          "default_value": 10000.0,
+          "address": "\"witcher3.exe\"+02AEB000",
+          "offsets": [128, 48, 0],
+          "hotkey": "NUMPAD 1"
+        },
+        {
+          "id": "w3_stamina",
+          "description": "Vigor / Stamina Infinita (Sinais Rápidos)",
+          "type": "Float",
+          "default_value": 100.0,
+          "address": "\"witcher3.exe\"+02AEB000",
+          "offsets": [128, 48, 8],
+          "hotkey": "NUMPAD 2"
+        },
+        {
+          "id": "w3_gold",
+          "description": "Coroas de Ouro Ilimitadas",
+          "type": "4 Bytes",
+          "default_value": 999999,
+          "address": "\"witcher3.exe\"+02AEB000",
+          "offsets": [128, 64, 16],
+          "hotkey": "NUMPAD 3"
+        },
+        {
+          "id": "w3_weight",
+          "description": "Peso Zero no Inventário",
+          "type": "Float",
+          "default_value": 0.0,
+          "address": "\"witcher3.exe\"+02AEB000",
+          "offsets": [128, 64, 24],
+          "hotkey": "NUMPAD 4"
+        }
+      ]
+    },
+    {
+      "id": "skyrim",
+      "game_name": "The Elder Scrolls V: Skyrim SE",
+      "engine_type": "Creation Engine",
+      "process_name": "SkyrimSE.exe",
+      "cheats": [
+        {
+          "id": "skyrim_hp",
+          "description": "Vida Infinita (Dovahkiin)",
+          "type": "Float",
+          "default_value": 1000.0,
+          "address": "\"SkyrimSE.exe\"+01E2F000",
+          "offsets": [80, 24, 0],
+          "hotkey": "NUMPAD 1"
+        },
+        {
+          "id": "skyrim_magicka",
+          "description": "Magicka Infinita (Sem Gasto de Magia)",
+          "type": "Float",
+          "default_value": 1000.0,
+          "address": "\"SkyrimSE.exe\"+01E2F000",
+          "offsets": [80, 24, 4],
+          "hotkey": "NUMPAD 2"
+        },
+        {
+          "id": "skyrim_stamina",
+          "description": "Stamina Infinita (Sprint Sem Parar)",
+          "type": "Float",
+          "default_value": 1000.0,
+          "address": "\"SkyrimSE.exe\"+01E2F000",
+          "offsets": [80, 24, 8],
+          "hotkey": "NUMPAD 3"
+        },
+        {
+          "id": "skyrim_gold",
+          "description": "Ouro Ilimitado (999.999 Septims)",
+          "type": "4 Bytes",
+          "default_value": 999999,
+          "address": "\"SkyrimSE.exe\"+01E2F000",
+          "offsets": [80, 48, 12],
+          "hotkey": "NUMPAD 4"
+        }
+      ]
+    },
+    {
+      "id": "god_of_war",
+      "game_name": "God of War (PC)",
+      "engine_type": "Santa Monica Engine",
+      "process_name": "GoW.exe",
+      "cheats": [
+        {
+          "id": "gow_kratos_hp",
+          "description": "Kratos - Vida Infinita (God Mode)",
+          "type": "Float",
+          "default_value": 1000.0,
+          "address": "\"GoW.exe\"+01B30000",
+          "offsets": [112, 16, 0],
+          "hotkey": "NUMPAD 1"
+        },
+        {
+          "id": "gow_rage",
+          "description": "Fúria Espartana Infinita",
+          "type": "Float",
+          "default_value": 100.0,
+          "address": "\"GoW.exe\"+01B30000",
+          "offsets": [112, 16, 8],
+          "hotkey": "NUMPAD 2"
+        },
+        {
+          "id": "gow_hacksilver",
+          "description": "Prata Ilimitada (Hacksilver)",
+          "type": "4 Bytes",
+          "default_value": 9999999,
+          "address": "\"GoW.exe\"+01B30000",
+          "offsets": [112, 32, 16],
+          "hotkey": "NUMPAD 3"
+        },
+        {
+          "id": "gow_xp",
+          "description": "XP Máximo (Pontos de Habilidade)",
+          "type": "4 Bytes",
+          "default_value": 999999,
+          "address": "\"GoW.exe\"+01B30000",
+          "offsets": [112, 32, 20],
+          "hotkey": "NUMPAD 4"
+        }
+      ]
+    },
+    {
+      "id": "sekiro",
+      "game_name": "Sekiro: Shadows Die Twice",
+      "engine_type": "FromSoftware Engine",
+      "process_name": "sekiro.exe",
+      "cheats": [
+        {
+          "id": "sekiro_hp",
+          "description": "Lobo - Vida Infinita (God Mode)",
+          "type": "4 Bytes",
+          "default_value": 1000,
+          "address": "\"sekiro.exe\"+03DF1A00",
+          "offsets": [88, 32, 0],
+          "hotkey": "NUMPAD 1"
+        },
+        {
+          "id": "sekiro_posture",
+          "description": "Postura Imbatível (Defesa Zero Dano)",
+          "type": "4 Bytes",
+          "default_value": 0,
+          "address": "\"sekiro.exe\"+03DF1A00",
+          "offsets": [88, 32, 8],
+          "hotkey": "NUMPAD 2"
+        },
+        {
+          "id": "sekiro_emblems",
+          "description": "Emblemas Espirituais Ilimitados",
+          "type": "4 Bytes",
+          "default_value": 99,
+          "address": "\"sekiro.exe\"+03DF1A00",
+          "offsets": [88, 32, 16],
+          "hotkey": "NUMPAD 3"
+        },
+        {
+          "id": "sekiro_sen",
+          "description": "Sen / Dinheiro Máximo",
+          "type": "4 Bytes",
+          "default_value": 999999,
+          "address": "\"sekiro.exe\"+03DF1A00",
+          "offsets": [88, 48, 4],
+          "hotkey": "NUMPAD 4"
+        }
+      ]
+    },
+    {
+      "id": "eldenring",
+      "game_name": "Elden Ring",
+      "engine_type": "FromSoftware Engine",
+      "process_name": "eldenring.exe",
+      "cheats": [
+        {
+          "id": "er_hp",
+          "description": "Vida Infinita (God Mode)",
+          "type": "4 Bytes",
+          "default_value": 3000,
+          "address": "\"eldenring.exe\"+03DF1A00",
+          "offsets": [64, 24, 0],
+          "hotkey": "NUMPAD 1"
+        },
+        {
+          "id": "er_fp",
+          "description": "FP / Magia Infinita",
+          "type": "4 Bytes",
+          "default_value": 500,
+          "address": "\"eldenring.exe\"+03DF1A00",
+          "offsets": [64, 24, 8],
+          "hotkey": "NUMPAD 2"
+        },
+        {
+          "id": "er_stamina",
+          "description": "Stamina Infinita (Sem Fadiga)",
+          "type": "4 Bytes",
+          "default_value": 500,
+          "address": "\"eldenring.exe\"+03DF1A00",
+          "offsets": [64, 24, 12],
+          "hotkey": "NUMPAD 3"
+        },
+        {
+          "id": "er_runes",
+          "description": "Runas Ilimitadas (99.999.999)",
+          "type": "4 Bytes",
+          "default_value": 99999999,
+          "address": "\"eldenring.exe\"+03DF1A00",
+          "offsets": [64, 32, 16],
+          "hotkey": "NUMPAD 4"
+        }
+      ]
+    },
+    {
+      "id": "mhw",
+      "game_name": "Monster Hunter: World",
+      "engine_type": "MT Framework",
+      "process_name": "MonsterHunterWorld.exe",
+      "cheats": [
+        {
+          "id": "mhw_hp",
+          "description": "Caçador - Vida Infinita",
+          "type": "Float",
+          "default_value": 200.0,
+          "address": "\"MonsterHunterWorld.exe\"+04F20000",
+          "offsets": [128, 32, 0],
+          "hotkey": "NUMPAD 1"
+        },
+        {
+          "id": "mhw_stamina",
+          "description": "Stamina / Energia Infinita",
+          "type": "Float",
+          "default_value": 150.0,
+          "address": "\"MonsterHunterWorld.exe\"+04F20000",
+          "offsets": [128, 32, 8],
+          "hotkey": "NUMPAD 2"
+        },
+        {
+          "id": "mhw_zenny",
+          "description": "Zenny / Dinheiro Máximo",
+          "type": "4 Bytes",
+          "default_value": 99999999,
+          "address": "\"MonsterHunterWorld.exe\"+04F20000",
+          "offsets": [128, 48, 16],
+          "hotkey": "NUMPAD 3"
+        }
+      ]
+    },
+    {
+      "id": "fallout4",
+      "game_name": "Fallout 4",
+      "engine_type": "Creation Engine",
+      "process_name": "Fallout4.exe",
+      "cheats": [
+        {
+          "id": "fo4_hp",
+          "description": "Vida Infinita (God Mode)",
+          "type": "Float",
+          "default_value": 2000.0,
+          "address": "\"Fallout4.exe\"+05A20000",
+          "offsets": [96, 16, 0],
+          "hotkey": "NUMPAD 1"
+        },
+        {
+          "id": "fo4_ap",
+          "description": "Action Points (AP) Infinitos",
+          "type": "Float",
+          "default_value": 500.0,
+          "address": "\"Fallout4.exe\"+05A20000",
+          "offsets": [96, 16, 8],
+          "hotkey": "NUMPAD 2"
+        },
+        {
+          "id": "fo4_caps",
+          "description": "Tampas de Garrafa (Caps) Ilimitadas",
+          "type": "4 Bytes",
+          "default_value": 999999,
+          "address": "\"Fallout4.exe\"+05A20000",
+          "offsets": [96, 32, 24],
+          "hotkey": "NUMPAD 3"
+        },
+        {
+          "id": "fo4_ammo",
+          "description": "Munição Infinita / Sem Recarga",
+          "type": "4 Bytes",
+          "default_value": 999,
+          "address": "\"Fallout4.exe\"+05A20000",
+          "offsets": [96, 32, 32],
+          "hotkey": "NUMPAD 4"
+        }
+      ]
+    },
+    {
+      "id": "hogwarts_legacy",
+      "game_name": "Hogwarts Legacy",
+      "engine_type": "Unreal Engine 4",
+      "process_name": "HogwartsLegacy.exe",
+      "cheats": [
+        {
+          "id": "hl_hp",
+          "description": "Vida Infinita (Bruxo Invencível)",
+          "type": "Float",
+          "default_value": 5000.0,
+          "address": "\"HogwartsLegacy.exe\"+07B1A000",
+          "offsets": [144, 48, 0],
+          "hotkey": "NUMPAD 1"
+        },
+        {
+          "id": "hl_magic",
+          "description": "Magia Antiga Sempre Cheia",
+          "type": "Float",
+          "default_value": 100.0,
+          "address": "\"HogwartsLegacy.exe\"+07B1A000",
+          "offsets": [144, 48, 8],
+          "hotkey": "NUMPAD 2"
+        },
+        {
+          "id": "hl_coins",
+          "description": "Galeões de Ouro Ilimitados",
+          "type": "4 Bytes",
+          "default_value": 999999,
+          "address": "\"HogwartsLegacy.exe\"+07B1A000",
+          "offsets": [144, 64, 16],
+          "hotkey": "NUMPAD 3"
         }
       ]
     },
@@ -85,15 +454,41 @@
           "address": "\"re4.exe\"+08F2A100",
           "offsets": [112, 32, 8],
           "hotkey": "NUMPAD 3"
+        }
+      ]
+    },
+    {
+      "id": "re2_remake",
+      "game_name": "Resident Evil 2 Remake",
+      "engine_type": "RE Engine",
+      "process_name": "re2.exe",
+      "cheats": [
+        {
+          "id": "re2_hp",
+          "description": "Saúde Infinita (Leon/Claire)",
+          "type": "Float",
+          "default_value": 1200.0,
+          "address": "\"re2.exe\"+07E12000",
+          "offsets": [96, 24, 0],
+          "hotkey": "NUMPAD 1"
         },
         {
-          "id": "re4_spinels",
-          "description": "Espinélios Infinitos",
+          "id": "re2_ammo",
+          "description": "Munição Infinita",
           "type": "4 Bytes",
           "default_value": 999,
-          "address": "\"re4.exe\"+08F2A100",
-          "offsets": [112, 32, 12],
-          "hotkey": "NUMPAD 4"
+          "address": "\"re2.exe\"+07E12000",
+          "offsets": [96, 24, 12],
+          "hotkey": "NUMPAD 2"
+        },
+        {
+          "id": "re2_ink",
+          "description": "Fitas de Tinta Infinitas (Salvamentos)",
+          "type": "4 Bytes",
+          "default_value": 99,
+          "address": "\"re2.exe\"+07E12000",
+          "offsets": [96, 32, 4],
+          "hotkey": "NUMPAD 3"
         }
       ]
     },
@@ -179,7 +574,7 @@
     {
       "id": "dark_souls_3",
       "game_name": "Dark Souls III",
-      "engine_type": "Nativo / Custom",
+      "engine_type": "FromSoftware Engine",
       "process_name": "DarkSoulsIII.exe",
       "cheats": [
         {
@@ -201,74 +596,363 @@
           "hotkey": "NUMPAD 2"
         },
         {
-          "id": "ds3_fp",
-          "description": "FP Ilimitado (Pontos de Foco)",
-          "type": "4 Bytes",
-          "default_value": 400,
-          "address": "\"DarkSoulsIII.exe\"+04768E78",
-          "offsets": [128, 316, 232],
-          "hotkey": "NUMPAD 3"
-        },
-        {
           "id": "ds3_souls",
           "description": "Almas Ilimitadas (9.999.999)",
           "type": "4 Bytes",
           "default_value": 9999999,
           "address": "\"DarkSoulsIII.exe\"+04768E78",
           "offsets": [128, 316, 240],
+          "hotkey": "NUMPAD 3"
+        }
+      ]
+    },
+    {
+      "id": "spiderman",
+      "game_name": "Marvel's Spider-Man Remastered",
+      "engine_type": "Insomniac Engine",
+      "process_name": "spiderman.exe",
+      "cheats": [
+        {
+          "id": "god_mode",
+          "description": "God Mode (Vida Infinita)",
+          "type": "Float",
+          "default_value": 1000.0,
+          "address": "\"spiderman.exe\"+01B4D200",
+          "offsets": [72, 16, 0],
+          "hotkey": "NUMPAD 1"
+        },
+        {
+          "id": "infinite_focus",
+          "description": "Foco Infinito / Finalizadores",
+          "type": "Float",
+          "default_value": 100.0,
+          "address": "\"spiderman.exe\"+01B4D200",
+          "offsets": [72, 16, 16],
+          "hotkey": "NUMPAD 2"
+        },
+        {
+          "id": "infinite_gadgets",
+          "description": "Munição de Dispositivos / Teias",
+          "type": "4 Bytes",
+          "default_value": 99,
+          "address": "\"spiderman.exe\"+01A2C100",
+          "offsets": [32, 8, 4],
+          "hotkey": "NUMPAD 3"
+        },
+        {
+          "id": "speedhack",
+          "description": "Super Velocidade de Movimento",
+          "type": "Float",
+          "default_value": 2.5,
+          "address": "\"spiderman.exe\"+0183F500",
+          "offsets": [16, 4],
           "hotkey": "NUMPAD 4"
         }
       ]
     },
     {
-      "id": "generic_unity",
-      "game_name": "Template Genérico (Jogos Unity)",
-      "engine_type": "Unity",
-      "process_name": "UnityGame.exe",
+      "id": "miles_morales",
+      "game_name": "Spider-Man: Miles Morales",
+      "engine_type": "Insomniac Engine",
+      "process_name": "MilesMorales.exe",
       "cheats": [
         {
-          "id": "infinite_health",
-          "description": "Vida Infinita (Player Health)",
+          "id": "mm_hp",
+          "description": "Vida Infinita (Miles)",
           "type": "Float",
-          "default_value": 9999.0,
-          "address": "\"UnityPlayer.dll\"+012A3400",
-          "offsets": [56, 32, 0],
+          "default_value": 1000.0,
+          "address": "\"MilesMorales.exe\"+02A10000",
+          "offsets": [80, 16, 0],
           "hotkey": "NUMPAD 1"
         },
         {
-          "id": "infinite_currency",
-          "description": "Dinheiro / Ouro / Moedas Ilimitadas",
+          "id": "mm_venom",
+          "description": "Poder Venom / Bio-Eletricidade Cheia",
+          "type": "Float",
+          "default_value": 100.0,
+          "address": "\"MilesMorales.exe\"+02A10000",
+          "offsets": [80, 16, 8],
+          "hotkey": "NUMPAD 2"
+        },
+        {
+          "id": "mm_invis",
+          "description": "Invisibilidade Ilimitada",
+          "type": "Float",
+          "default_value": 100.0,
+          "address": "\"MilesMorales.exe\"+02A10000",
+          "offsets": [80, 16, 16],
+          "hotkey": "NUMPAD 3"
+        }
+      ]
+    },
+    {
+      "id": "batman_ak",
+      "game_name": "Batman: Arkham Knight",
+      "engine_type": "Unreal Engine 3",
+      "process_name": "BatmanAK.exe",
+      "cheats": [
+        {
+          "id": "bat_hp",
+          "description": "Batman & Batmóvel Invencíveis",
+          "type": "Float",
+          "default_value": 1000.0,
+          "address": "\"BatmanAK.exe\"+02FE0000",
+          "offsets": [128, 32, 0],
+          "hotkey": "NUMPAD 1"
+        },
+        {
+          "id": "bat_points",
+          "description": "Pontos WayneTech Ilimitados (99)",
           "type": "4 Bytes",
-          "default_value": 999999,
-          "address": "\"UnityPlayer.dll\"+012A3400",
-          "offsets": [56, 32, 8],
+          "default_value": 99,
+          "address": "\"BatmanAK.exe\"+02FE0000",
+          "offsets": [128, 32, 8],
           "hotkey": "NUMPAD 2"
         }
       ]
     },
     {
-      "id": "generic_unreal",
-      "game_name": "Template Genérico (Unreal Engine 4/5)",
-      "engine_type": "Unreal Engine",
-      "process_name": "UnrealGame-Win64-Shipping.exe",
+      "id": "doom_eternal",
+      "game_name": "Doom Eternal",
+      "engine_type": "id Tech 7",
+      "process_name": "DOOMEternalx64vk.exe",
       "cheats": [
         {
-          "id": "god_mode",
-          "description": "Invulnerabilidade (God Mode)",
+          "id": "doom_hp",
+          "description": "Doom Slayer - Vida Infinita",
           "type": "Float",
-          "default_value": 100.0,
-          "address": "\"UnrealGame-Win64-Shipping.exe\"+03FA0000",
-          "offsets": [48, 16, 0],
+          "default_value": 500.0,
+          "address": "\"DOOMEternalx64vk.exe\"+03DF0000",
+          "offsets": [112, 16, 0],
           "hotkey": "NUMPAD 1"
         },
         {
-          "id": "infinite_ammo",
-          "description": "Munição Infinita / Sem Recarga",
+          "id": "doom_armor",
+          "description": "Armadura Infinita",
+          "type": "Float",
+          "default_value": 500.0,
+          "address": "\"DOOMEternalx64vk.exe\"+03DF0000",
+          "offsets": [112, 16, 4],
+          "hotkey": "NUMPAD 2"
+        },
+        {
+          "id": "doom_ammo",
+          "description": "Munição Ilimitada (Todas as Armas)",
           "type": "4 Bytes",
           "default_value": 999,
-          "address": "\"UnrealGame-Win64-Shipping.exe\"+03FA0000",
-          "offsets": [48, 16, 24],
+          "address": "\"DOOMEternalx64vk.exe\"+03DF0000",
+          "offsets": [112, 32, 16],
+          "hotkey": "NUMPAD 3"
+        }
+      ]
+    },
+    {
+      "id": "dmc5",
+      "game_name": "Devil May Cry 5",
+      "engine_type": "RE Engine",
+      "process_name": "DevilMayCry5.exe",
+      "cheats": [
+        {
+          "id": "dmc_hp",
+          "description": "Vida Infinita (Dante / Nero / V)",
+          "type": "Float",
+          "default_value": 10000.0,
+          "address": "\"DevilMayCry5.exe\"+07AC0000",
+          "offsets": [96, 24, 0],
+          "hotkey": "NUMPAD 1"
+        },
+        {
+          "id": "dmc_dt",
+          "description": "Devil Trigger Infinito",
+          "type": "Float",
+          "default_value": 10000.0,
+          "address": "\"DevilMayCry5.exe\"+07AC0000",
+          "offsets": [96, 24, 8],
           "hotkey": "NUMPAD 2"
+        },
+        {
+          "id": "dmc_orbs",
+          "description": "Orbes Vermelhos Máximos (99.999.999)",
+          "type": "4 Bytes",
+          "default_value": 99999999,
+          "address": "\"DevilMayCry5.exe\"+07AC0000",
+          "offsets": [96, 32, 16],
+          "hotkey": "NUMPAD 3"
+        }
+      ]
+    },
+    {
+      "id": "ac_valhalla",
+      "game_name": "Assassin's Creed Valhalla",
+      "engine_type": "AnvilNext 2.0",
+      "process_name": "ACValhalla.exe",
+      "cheats": [
+        {
+          "id": "ac_hp",
+          "description": "Eivor - Vida Infinita (God Mode)",
+          "type": "Float",
+          "default_value": 1000.0,
+          "address": "\"ACValhalla.exe\"+04A10000",
+          "offsets": [80, 16, 0],
+          "hotkey": "NUMPAD 1"
+        },
+        {
+          "id": "ac_stamina",
+          "description": "Stamina Infinita",
+          "type": "Float",
+          "default_value": 100.0,
+          "address": "\"ACValhalla.exe\"+04A10000",
+          "offsets": [80, 16, 8],
+          "hotkey": "NUMPAD 2"
+        },
+        {
+          "id": "ac_silver",
+          "description": "Prata Ilimitada (999.999)",
+          "type": "4 Bytes",
+          "default_value": 999999,
+          "address": "\"ACValhalla.exe\"+04A10000",
+          "offsets": [80, 32, 16],
+          "hotkey": "NUMPAD 3"
+        }
+      ]
+    },
+    {
+      "id": "hzd",
+      "game_name": "Horizon Zero Dawn",
+      "engine_type": "Decima Engine",
+      "process_name": "HorizonZeroDawn.exe",
+      "cheats": [
+        {
+          "id": "hzd_hp",
+          "description": "Aloy - Vida Infinita",
+          "type": "Float",
+          "default_value": 800.0,
+          "address": "\"HorizonZeroDawn.exe\"+03DF2000",
+          "offsets": [112, 24, 0],
+          "hotkey": "NUMPAD 1"
+        },
+        {
+          "id": "hzd_ammo",
+          "description": "Flechas / Munição Infinita",
+          "type": "4 Bytes",
+          "default_value": 99,
+          "address": "\"HorizonZeroDawn.exe\"+03DF2000",
+          "offsets": [112, 24, 8],
+          "hotkey": "NUMPAD 2"
+        },
+        {
+          "id": "hzd_shards",
+          "description": "Estilhaços de Metal Máximos",
+          "type": "4 Bytes",
+          "default_value": 999999,
+          "address": "\"HorizonZeroDawn.exe\"+03DF2000",
+          "offsets": [112, 32, 16],
+          "hotkey": "NUMPAD 3"
+        }
+      ]
+    },
+    {
+      "id": "starfield",
+      "game_name": "Starfield",
+      "engine_type": "Creation Engine 2",
+      "process_name": "Starfield.exe",
+      "cheats": [
+        {
+          "id": "sf_hp",
+          "description": "Vida Infinita (God Mode)",
+          "type": "Float",
+          "default_value": 2000.0,
+          "address": "\"Starfield.exe\"+06DF0000",
+          "offsets": [128, 32, 0],
+          "hotkey": "NUMPAD 1"
+        },
+        {
+          "id": "sf_o2",
+          "description": "Oxigênio (O2) Ilimitado",
+          "type": "Float",
+          "default_value": 100.0,
+          "address": "\"Starfield.exe\"+06DF0000",
+          "offsets": [128, 32, 8],
+          "hotkey": "NUMPAD 2"
+        },
+        {
+          "id": "sf_credits",
+          "description": "Créditos Ilimitados (99.999.999)",
+          "type": "4 Bytes",
+          "default_value": 99999999,
+          "address": "\"Starfield.exe\"+06DF0000",
+          "offsets": [128, 48, 16],
+          "hotkey": "NUMPAD 3"
+        }
+      ]
+    },
+    {
+      "id": "bg3",
+      "game_name": "Baldur's Gate 3",
+      "engine_type": "Divinity Engine 4.0",
+      "process_name": "bg3.exe",
+      "cheats": [
+        {
+          "id": "bg3_hp",
+          "description": "Grupo - Vida Infinita",
+          "type": "4 Bytes",
+          "default_value": 500,
+          "address": "\"bg3.exe\"+05C20000",
+          "offsets": [96, 24, 0],
+          "hotkey": "NUMPAD 1"
+        },
+        {
+          "id": "bg3_spells",
+          "description": "Espaços de Magia Infinitos",
+          "type": "4 Bytes",
+          "default_value": 10,
+          "address": "\"bg3.exe\"+05C20000",
+          "offsets": [96, 24, 8],
+          "hotkey": "NUMPAD 2"
+        },
+        {
+          "id": "bg3_gold",
+          "description": "Ouro Ilimitado (999.999)",
+          "type": "4 Bytes",
+          "default_value": 999999,
+          "address": "\"bg3.exe\"+05C20000",
+          "offsets": [96, 48, 16],
+          "hotkey": "NUMPAD 3"
+        }
+      ]
+    },
+    {
+      "id": "dead_space",
+      "game_name": "Dead Space Remake",
+      "engine_type": "Frostbite Engine",
+      "process_name": "DeadSpace.exe",
+      "cheats": [
+        {
+          "id": "ds_hp",
+          "description": "Isaac Clarke - Vida Infinita",
+          "type": "Float",
+          "default_value": 1000.0,
+          "address": "\"DeadSpace.exe\"+04F1A000",
+          "offsets": [112, 32, 0],
+          "hotkey": "NUMPAD 1"
+        },
+        {
+          "id": "ds_stasis",
+          "description": "Estase Infinita (Congelamento)",
+          "type": "Float",
+          "default_value": 100.0,
+          "address": "\"DeadSpace.exe\"+04F1A000",
+          "offsets": [112, 32, 8],
+          "hotkey": "NUMPAD 2"
+        },
+        {
+          "id": "ds_credits",
+          "description": "Créditos Ilimitados",
+          "type": "4 Bytes",
+          "default_value": 999999,
+          "address": "\"DeadSpace.exe\"+04F1A000",
+          "offsets": [112, 48, 16],
+          "hotkey": "NUMPAD 3"
         }
       ]
     }

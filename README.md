@@ -1,50 +1,78 @@
-# 🎮 CheatCraft Studio v3.0 Pro
+# 🎮 CheatCraft Studio v4.0 Ultimate
 
-> **Universal Single-Player Game Modder, Trainer Hub & Cheat Engine (.CT) Studio**
+> **Universal Single-Player Game Modder, Mega AAA Presets Hub & Cheat Engine (.CT) Studio**
 
-[![GitHub Release](https://img.shields.io/badge/release-v3.0--pro-00d2ff.svg)](https://github.com/Henrique1601/CheatCraft)
+[![GitHub Release](https://img.shields.io/badge/release-v4.0--ultimate-00d2ff.svg)](https://github.com/Henrique1601/CheatCraft)
+[![Presets](https://img.shields.io/badge/presets-25%2B%20AAA%20Games-green.svg)](#)
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://python.org)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-orange.svg)](#)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](#)
 
-**CheatCraft Studio** é uma plataforma Desktop completa para Windows focada em modding, criação de cheats, engenharia reversa e manipulação de memória para jogos singleplayer offline. 
+**CheatCraft Studio Ultimate** é a suíte definitiva para PC voltada ao modding, engenharia reversa e manipulação de memória para jogos singleplayer offline. 
 
-Ele combina a experiência moderna e visual de ferramentas como *WeMod* com o poder técnico de exportação para tabelas nativas `.CT` do **Cheat Engine** (XML estruturado + Lua auto-attach).
-
----
-
-## ✨ Funcionalidades Principais (v3.0 Pro)
-
-* 🚀 **Auto-Attach Silencioso & Feedback Sonoro (`core/sound_feedback.py`)**: Conexão instantânea em segundo plano com o processo do jogo assim que ele é aberto, acompanhado de beeps sonoros sutis no padrão Windows indicando conexão e ativação de cheats.
-* ⏱️ **Speedhack Universal (`core/speedhack_controller.py`)**: Controle deslizante na interface para acelerar ou desacelerar o tempo do jogo de **0.25x** (câmera lenta para esquivas) até **5.0x / 10.0x** (pular cutscenes e grind).
-* 🤖 **AI Cheat Assistant (`core/ai_assistant.py`)**: Análise inteligente da engine do jogo (*Unity*, *Unreal Engine*, *Godot*, *C++ Nativo*) com recomendações de módulos base, offsets típicos e assinaturas AOB.
-* 🔍 **Memory Scanner Integrado (`core/memory_scanner.py`)**: First Scan e Next Scan direto no aplicativo para encontrar endereços dinâmicos na RAM sem depender de softwares de terceiros.
-* 🪟 **In-Game HUD Overlay Transparente (`core/hud_overlay.py`)**: Painel flutuante sobreposto à tela do jogo com ativação pela tecla **`[Insert]`**.
-* 🌐 **Cloud Hub de Tabelas (`core/cloud_hub.py`)**: Sincronização e download com 1 clique de presets da comunidade no GitHub.
-* 🕹️ **Módulo de Emuladores de Console (`core/emulator_manager.py`)**: Mapeamento de memória virtual para **RPCS3** (PS3), **PCSX2** (PS2), **Dolphin** (GameCube/Wii) e **Cemu** (Wii U).
-* 📄 **Gerador de Tabelas `.CT` (Cheat Engine)**: Exportação com 1 clique de arquivos `.CT` nativos em XML, contendo endereços, offsets multiníveis, tipos de variáveis e scripts de auto-assembly.
-* 📦 **Script de Build Standalone (`build_exe.bat`)**: Compilação automatizada com PyInstaller em executável nativo `.exe`.
+Ele reúne o maior catálogo nativo de presets para **25+ dos jogos mais jogados do mundo**, além de um **Importador Universal de Tabelas `.CT`**, permitindo carregar qualquer cheat espalhado pela internet (Fearless Revolution, fóruns de Cheat Engine, GitHub) com apenas 1 clique!
 
 ---
 
-## 🚀 Como Executar
+## 📚 Mega Catálogo Nativo de Jogos (25+ Títulos AAA)
 
-### 1. Iniciar via Python
+| Jogo | Processo | Engine | Cheats Inclusos |
+| :--- | :--- | :--- | :--- |
+| **Grand Theft Auto V** | `GTA5.exe` | RAGE | God Mode, Munição Infinita, $999M, Sem Polícia |
+| **Red Dead Redemption 2** | `RDR2.exe` | RAGE | Saúde Arthur/Cavalo, Stamina, Dead Eye, Dinheiro |
+| **The Witcher 3: Wild Hunt** | `witcher3.exe` | REDengine 3 | God Mode Geralt, Vigor Infinito, Ouro, Peso Zero |
+| **The Elder Scrolls V: Skyrim** | `SkyrimSE.exe` | Creation Engine | Vida, Magicka, Stamina, Ouro Infinito |
+| **God of War (PC)** | `GoW.exe` | Santa Monica | Vida Kratos, Fúria Espartana, Prata, XP |
+| **Sekiro: Shadows Die Twice** | `sekiro.exe` | FromSoftware | Vida, Postura Imbatível, Emblemas, Sen |
+| **Elden Ring** | `eldenring.exe` | FromSoftware | HP, FP, Stamina, Runas 99.999.999 |
+| **Monster Hunter: World** | `MonsterHunterWorld.exe` | MT Framework | Vida, Stamina, Zenny Ilimitado |
+| **Fallout 4** | `Fallout4.exe` | Creation Engine | Vida, AP Infinito, Tampas de Garrafa, Munição |
+| **Hogwarts Legacy** | `HogwartsLegacy.exe` | Unreal Engine 4 | Vida, Magia Antiga, Galeões de Ouro |
+| **Resident Evil 4 Remake** | `re4.exe` | RE Engine | Leon Invencível, Munição, Pesetas 9.999.999 |
+| **Resident Evil 2 Remake** | `re2.exe` | RE Engine | Vida, Munição Infinita, Fitas de Tinta |
+| **Cyberpunk 2077** | `Cyberpunk2077.exe` | REDengine 4 | Vida V, Stamina, Munição, Eddies 99.999.999 |
+| **Hollow Knight** | `hollow_knight.exe` | Unity | Máscaras Infinitas, Alma, Geo 99.999 |
+| **Dark Souls III** | `DarkSoulsIII.exe` | FromSoftware | HP, FP, Stamina, Almas 9.999.999 |
+| **Marvel's Spider-Man Remastered**| `spiderman.exe` | Insomniac | God Mode, Foco Infinito, Gadgets, Speedhack |
+| **Spider-Man: Miles Morales** | `MilesMorales.exe` | Insomniac | Vida, Poder Venom, Invisibilidade Ilimitada |
+| **Batman: Arkham Knight** | `BatmanAK.exe` | Unreal Engine 3 | Vida Batman/Batmóvel, Pontos WayneTech |
+| **Doom Eternal** | `DOOMEternalx64vk.exe` | id Tech 7 | Slayer Invencível, Armadura, Munição |
+| **Devil May Cry 5** | `DevilMayCry5.exe` | RE Engine | Vida Dante/Nero, Devil Trigger, Orbes |
+| **Assassin's Creed Valhalla** | `ACValhalla.exe` | AnvilNext 2.0 | Vida Eivor, Stamina, Prata Ilimitada |
+| **Horizon Zero Dawn** | `HorizonZeroDawn.exe` | Decima Engine | Aloy Invencível, Flechas, Estilhaços |
+| **Starfield** | `Starfield.exe` | Creation Engine 2 | Vida, Oxigênio (O2), Créditos 99.999.999 |
+| **Baldur's Gate 3** | `bg3.exe` | Divinity Engine | Vida do Grupo, Espaços de Magia, Ouro |
+| **Dead Space Remake** | `DeadSpace.exe` | Frostbite | Vida Isaac, Estase Infinita, Créditos |
+
+---
+
+## ⚡ Novas Funcionalidades da v4.0 Ultimate
+
+* 📥 **Importador Universal de Tabelas `.CT` da Web**: Baixe qualquer tabela do Cheat Engine de qualquer site da internet, clique em **"Importar Tabela .CT da Web"** e os cheats serão lidos, parseados e adicionados imediatamente à interface do CheatCraft!
+* 🪟 **In-Game HUD com Contador de FPS e Mira Gamer**: Overlay semi-transparente sobre o jogo com tecla **`[Insert]`**, medidor de FPS em tempo real e mira virtual customizável.
+* ⏱️ **Speedhack Universal de Tempo**: Acelere ou desacelere qualquer jogo de **0.25x** até **5.0x / 10.0x**.
+* 🤖 **AI Cheat Assistant**: Diagnóstico arquitetural de engines (*Unity, Unreal, RE Engine, FromSoftware, Creation*) com recomendações de offsets.
+* 🔍 **Scanner de Memória Integrado**: First Scan e Next Scan embutidos para encontrar ponteiros dinâmicos.
+* 📦 **Build Nativo Standalone (.exe)**: Executável portátil compilado em [`dist/CheatCraft_Studio/CheatCraft_Studio.exe`](file:///c:/Users/Public/Downloads/scripts%20para%20jogos/dist/CheatCraft_Studio/CheatCraft_Studio.exe).
+
+---
+
+## 🚀 Como Usar
+
+### Executar pelo Launcher:
 ```powershell
-pip install -r requirements.txt
 python launcher.py
 ```
-Ou com duplo clique em [`iniciar_cheatcraft.bat`](file:///c:/Users/Public/Downloads/scripts%20para%20jogos/iniciar_cheatcraft.bat).
+*(Ou dê um duplo clique no arquivo `iniciar_cheatcraft.bat`)*
 
-### 2. Compilar Executável Portátil (.exe)
-Dê um duplo clique no script:
-```cmd
-build_exe.bat
+### Executar pelo Executável (.exe portátil):
+Dê dois cliques em:
+```text
+dist\CheatCraft_Studio\CheatCraft_Studio.exe
 ```
-O executável standalone será gerado em `dist/CheatCraft_Studio/CheatCraft_Studio.exe`.
 
 ---
 
 ## ⚖️ Aviso Legal / Disclaimer
 
-O **CheatCraft Studio** foi desenvolvido exclusivamente para fins de estudo, aprendizado de engenharia reversa e uso em jogos **singleplayer offline**. Não utilize em jogos multiplayer ou títulos com anti-cheat online.
+O **CheatCraft Studio** foi desenvolvido exclusivamente para fins de estudo, engenharia reversa e uso em jogos **singleplayer offline**. Não utilize em jogos multiplayer ou com anti-cheats online.

@@ -11,6 +11,9 @@ from core.memory_scanner import MemoryScanner
 from core.hud_overlay import InGameHUDOverlay
 from core.cloud_hub import CloudHub
 from core.emulator_manager import EmulatorManager
+from core.sound_feedback import SoundFeedback
+from core.speedhack_controller import SpeedhackController
+from core.ai_assistant import AIAssistantEngine
 from memory_engine import MemoryEngine
 
 ctk.set_appearance_mode("dark")
@@ -20,20 +23,22 @@ class CheatCraftApp(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("⚡ CheatCraft Studio v2.0 // Launcher, Modder & .CT Studio")
-        self.geometry("1060x720")
-        self.minsize(940, 640)
+        self.title("⚡ CheatCraft Studio v3.0 Pro // Launcher, Modder & .CT Studio")
+        self.geometry("1100x740")
+        self.minsize(980, 660)
 
         # Estados e Dados
         self.presets = self._load_presets()
         self.selected_game = self.presets[0] if self.presets else None
         self.detected_games = []
         self.active_cheats = {}
+        self.was_connected = False
 
-        # Módulos do Core v2.0
+        # Módulos do Core v3.0
         self.mem = MemoryEngine(process_name=self.selected_game["process_name"] if self.selected_game else "")
         self.scanner = MemoryScanner()
         self.hud = InGameHUDOverlay()
+        self.speedhack = SpeedhackController(self.mem)
 
         self._build_layout()
         self._start_steam_scan_async()
@@ -55,7 +60,7 @@ class CheatCraftApp(ctk.CTk):
         self.grid_rowconfigure(0, weight=1)
 
         # ------------------- SIDEBAR ESQUERDA -------------------
-        sidebar = ctk.CTkFrame(self, width=280, corner_radius=0, fg_color=("#141422", "#0d0d16"))
+        sidebar = ctk.CTkFrame(self, width=290, corner_radius=0, fg_color=("#141422", "#0d0d16"))
         sidebar.grid(row=0, column=0, sticky="nsew", padx=0, pady=0)
         sidebar.grid_propagate(False)
 
@@ -65,15 +70,15 @@ class CheatCraftApp(ctk.CTk):
             font=ctk.CTkFont(size=22, weight="bold"),
             text_color="#00d2ff"
         )
-        logo_lbl.pack(pady=(20, 2), padx=20, anchor="w")
+        logo_lbl.pack(pady=(18, 2), padx=20, anchor="w")
 
         sub_logo = ctk.CTkLabel(
             sidebar,
-            text="Universal Game Modder & .CT Studio v2.0",
+            text="Universal Game Modder v3.0 Pro",
             font=ctk.CTkFont(size=11),
             text_color="#7b7b99"
         )
-        sub_logo.pack(pady=(0, 16), padx=20, anchor="w")
+        sub_logo.pack(pady=(0, 14), padx=20, anchor="w")
 
         # Botão Sincronizar Nuvem
         cloud_btn = ctk.CTkButton(
@@ -83,7 +88,7 @@ class CheatCraftApp(ctk.CTk):
             hover_color="#2b4266",
             command=self._sync_cloud
         )
-        cloud_btn.pack(padx=20, pady=(0, 10), fill="x")
+        cloud_btn.pack(padx=20, pady=(0, 8), fill="x")
 
         # Título da Seção
         sec_title = ctk.CTkLabel(
@@ -92,21 +97,31 @@ class CheatCraftApp(ctk.CTk):
             font=ctk.CTkFont(size=12, weight="bold"),
             text_color="#9090b0"
         )
-        sec_title.pack(padx=20, pady=(8, 4), anchor="w")
+        sec_title.pack(padx=20, pady=(6, 4), anchor="w")
 
         self.games_scroll = ctk.CTkScrollableFrame(sidebar, fg_color="transparent")
         self.games_scroll.pack(fill="both", expand=True, padx=10, pady=5)
         self._render_game_list()
 
+        # Botão AI Assistant
+        ai_btn = ctk.CTkButton(
+            sidebar,
+            text="🤖 AI Cheat Assistant",
+            fg_color="#2d1b4e",
+            hover_color="#3e256b",
+            command=self._open_ai_assistant_modal
+        )
+        ai_btn.pack(padx=20, pady=(6, 4), fill="x")
+
         # Botão In-Game HUD
         hud_btn = ctk.CTkButton(
             sidebar,
-            text="🪟 Iniciar In-Game HUD (Insert)",
+            text="🪟 In-Game HUD (Insert)",
             fg_color="#332244",
             hover_color="#4d3366",
             command=self._launch_hud
         )
-        hud_btn.pack(padx=20, pady=(6, 6), fill="x")
+        hud_btn.pack(padx=20, pady=(4, 4), fill="x")
 
         # Botão Escanear Steam
         scan_btn = ctk.CTkButton(
@@ -116,17 +131,17 @@ class CheatCraftApp(ctk.CTk):
             hover_color="#31314f",
             command=self._manual_steam_scan
         )
-        scan_btn.pack(padx=20, pady=(0, 20), fill="x")
+        scan_btn.pack(padx=20, pady=(4, 16), fill="x")
 
         # ------------------- CONTEÚDO PRINCIPAL (DIREITA) -------------------
         main_content = ctk.CTkFrame(self, fg_color=("#1b1b28", "#12121c"), corner_radius=0)
         main_content.grid(row=0, column=1, sticky="nsew", padx=0, pady=0)
         main_content.grid_columnconfigure(0, weight=1)
-        main_content.grid_rowconfigure(2, weight=1)
+        main_content.grid_rowconfigure(3, weight=1)
 
         # Top Bar: Status do Jogo Selecionado
         top_bar = ctk.CTkFrame(main_content, fg_color=("#222234", "#1a1a27"), corner_radius=12)
-        top_bar.grid(row=0, column=0, sticky="ew", padx=20, pady=(20, 10))
+        top_bar.grid(row=0, column=0, sticky="ew", padx=20, pady=(16, 8))
 
         self.game_header_title = ctk.CTkLabel(
             top_bar,
@@ -134,7 +149,7 @@ class CheatCraftApp(ctk.CTk):
             font=ctk.CTkFont(size=18, weight="bold"),
             text_color="#ffffff"
         )
-        self.game_header_title.pack(side="left", padx=16, pady=12)
+        self.game_header_title.pack(side="left", padx=16, pady=10)
 
         self.status_badge = ctk.CTkLabel(
             top_bar,
@@ -142,11 +157,42 @@ class CheatCraftApp(ctk.CTk):
             font=ctk.CTkFont(size=13, weight="bold"),
             text_color="#ff5555"
         )
-        self.status_badge.pack(side="right", padx=16, pady=12)
+        self.status_badge.pack(side="right", padx=16, pady=10)
+
+        # Barra Speedhack Integrada
+        speed_bar = ctk.CTkFrame(main_content, fg_color=("#242438", "#1b1b29"), corner_radius=10)
+        speed_bar.grid(row=1, column=0, sticky="ew", padx=20, pady=4)
+
+        speed_title = ctk.CTkLabel(speed_bar, text="⏱️ Speedhack Universal:", font=ctk.CTkFont(weight="bold"))
+        speed_title.pack(side="left", padx=(14, 10), pady=8)
+
+        self.speed_slider = ctk.CTkSlider(
+            speed_bar,
+            from_=0.25,
+            to=5.0,
+            number_of_steps=19,
+            command=self._on_speed_changed
+        )
+        self.speed_slider.set(1.0)
+        self.speed_slider.pack(side="left", fill="x", expand=True, padx=10, pady=8)
+
+        self.speed_val_lbl = ctk.CTkLabel(speed_bar, text="1.0x (Normal)", width=90, font=ctk.CTkFont(weight="bold"))
+        self.speed_val_lbl.pack(side="left", padx=5)
+
+        reset_speed_btn = ctk.CTkButton(
+            speed_bar,
+            text="Reset (1x)",
+            width=70,
+            height=28,
+            fg_color="#3a3a52",
+            hover_color="#4d4d6e",
+            command=self._reset_speed
+        )
+        reset_speed_btn.pack(side="right", padx=(5, 14), pady=8)
 
         # Ações Rápidas (Barra de Ferramentas)
         actions_bar = ctk.CTkFrame(main_content, fg_color="transparent")
-        actions_bar.grid(row=1, column=0, sticky="ew", padx=20, pady=5)
+        actions_bar.grid(row=2, column=0, sticky="ew", padx=20, pady=6)
 
         export_ct_btn = ctk.CTkButton(
             actions_bar,
@@ -182,7 +228,7 @@ class CheatCraftApp(ctk.CTk):
             label_text="MODIFICADORES DE MEMÓRIA & CHEATS ATIVOS",
             fg_color=("#171724", "#101019")
         )
-        self.cheats_container.grid(row=2, column=0, sticky="nsew", padx=20, pady=(5, 20))
+        self.cheats_container.grid(row=3, column=0, sticky="nsew", padx=20, pady=(4, 16))
         self._render_cheats_list()
 
     def _render_game_list(self):
@@ -260,9 +306,27 @@ class CheatCraftApp(ctk.CTk):
 
     def _toggle_live_cheat(self, cheat_id, cheat_name):
         curr = self.active_cheats.get(cheat_name, False)
-        self.active_cheats[cheat_name] = not curr
+        new_val = not curr
+        self.active_cheats[cheat_name] = new_val
+
+        # Feedback sonoro sutil
+        if new_val:
+            SoundFeedback.play_cheat_on()
+        else:
+            SoundFeedback.play_cheat_off()
+
         if self.hud.root:
             self.hud.update_cheats(self.active_cheats)
+
+    def _on_speed_changed(self, val):
+        val_rounded = round(val, 2)
+        self.speed_val_lbl.configure(text=f"{val_rounded:.2f}x")
+        self.speedhack.set_speed(val_rounded)
+
+    def _reset_speed(self):
+        self.speed_slider.set(1.0)
+        self.speed_val_lbl.configure(text="1.0x (Normal)")
+        self.speedhack.reset_speed()
 
     def _launch_hud(self):
         if not self.hud.root:
@@ -277,8 +341,44 @@ class CheatCraftApp(ctk.CTk):
         self._render_game_list()
         messagebox.showinfo("Cloud Hub", f"Sincronização concluída!\nNovos presets adicionados: {added}")
 
+    def _open_ai_assistant_modal(self):
+        """Abre modal com análise inteligente e recomendações de engenharia reversa."""
+        modal = ctk.CTkToplevel(self)
+        modal.title("🤖 AI Cheat Assistant - Análise Estratégica")
+        modal.geometry("560x480")
+        modal.resizable(False, False)
+
+        game_name = self.selected_game.get("game_name", "Jogo") if self.selected_game else "Jogo"
+        engine_type = self.selected_game.get("engine_type", "Nativo / Custom") if self.selected_game else "Nativo"
+        proc = self.selected_game.get("process_name", "") if self.selected_game else ""
+
+        report = AIAssistantEngine.analyze_game(game_name, engine_type, proc)
+
+        title_lbl = ctk.CTkLabel(modal, text=f"Análise de Engine: {game_name}", font=ctk.CTkFont(size=16, weight="bold"), text_color="#00d2ff")
+        title_lbl.pack(pady=(16, 8), padx=20, anchor="w")
+
+        box = ctk.CTkTextbox(modal, height=360)
+        box.pack(fill="both", expand=True, padx=20, pady=(0, 20))
+
+        content = (
+            f"🎮 Jogo: {report['game_name']}\n"
+            f"⚙️ Engine Identificada: {report['engine_type']}\n"
+            f"📍 Módulo Base Recomendado: {report['base_module']}\n\n"
+            f"--- DIAGNÓSTICO E ESTRATÉGIA ---\n"
+            f"{report['analysis']}\n\n"
+            f"--- PADRÕES DE MEMÓRIA SUGERIDOS ---\n"
+        )
+        for p in report["patterns"]:
+            content += f"• {p['name']}: {p['hint']}\n"
+
+        content += f"\n--- TIPOS DE DADOS MAIS EFICAZES ---\n"
+        for t in report["recommended_types"]:
+            content += f"✓ {t}\n"
+
+        box.insert("end", content)
+        box.configure(state="disabled")
+
     def _open_scanner_modal(self):
-        """Abre janela com o Memory Scanner integrado estilo Cheat Engine (First/Next Scan)."""
         modal = ctk.CTkToplevel(self)
         modal.title("🔍 CheatCraft Memory Scanner")
         modal.geometry("520x460")
@@ -287,7 +387,6 @@ class CheatCraftApp(ctk.CTk):
         header_lbl = ctk.CTkLabel(modal, text="Scanner de Memória em Tempo Real", font=ctk.CTkFont(size=15, weight="bold"))
         header_lbl.pack(pady=(15, 5))
 
-        # Inputs
         input_frame = ctk.CTkFrame(modal, fg_color="transparent")
         input_frame.pack(fill="x", padx=20, pady=5)
 
@@ -297,7 +396,6 @@ class CheatCraftApp(ctk.CTk):
         type_combo = ctk.CTkComboBox(input_frame, values=["4 Bytes", "Float"], width=120)
         type_combo.pack(side="right")
 
-        # Botões de Ação
         btn_frame = ctk.CTkFrame(modal, fg_color="transparent")
         btn_frame.pack(fill="x", padx=20, pady=10)
 
@@ -434,6 +532,7 @@ class CheatCraftApp(ctk.CTk):
                     self.presets.append({
                         "id": d["name"].lower().replace(" ", "_"),
                         "game_name": f"{d['name']} ({d['engine_type']})",
+                        "engine_type": d["engine_type"],
                         "process_name": d["executable"],
                         "cheats": [
                             {
@@ -456,14 +555,20 @@ class CheatCraftApp(ctk.CTk):
                     self.mem.process_name = proc_name
                     connected = self.mem.connect()
                     if connected:
+                        if not self.was_connected:
+                            SoundFeedback.play_connected()
+                            self.was_connected = True
                         self.after(0, lambda: self.status_badge.configure(
                             text=f"● Conectado ({proc_name})", text_color="#00ff66"
                         ))
                     else:
+                        if self.was_connected:
+                            SoundFeedback.play_disconnected()
+                            self.was_connected = False
                         self.after(0, lambda: self.status_badge.configure(
                             text=f"● Desconectado ({proc_name})", text_color="#ff5555"
                         ))
-                time.sleep(2.0)
+                time.sleep(1.5)
 
         threading.Thread(target=monitor, daemon=True).start()
 

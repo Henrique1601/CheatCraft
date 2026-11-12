@@ -1,64 +1,50 @@
-# 🎮 CheatCraft Studio
+# 🎮 CheatCraft Studio v3.0 Pro
 
-> **Universal Single-Player Game Modder, Trainer Hub & Cheat Engine (.CT) Generator**
+> **Universal Single-Player Game Modder, Trainer Hub & Cheat Engine (.CT) Studio**
 
-**CheatCraft** é um aplicativo desktop moderno para Windows focado em modding, criação de cheats e manipulação de memória para jogos singleplayer offline. Ele combina a facilidade de uso de um hub estilo WeMod com a flexibilidade técnica de exportação direta para tabelas nativas `.CT` do Cheat Engine (XML + Lua auto-attach).
+[![GitHub Release](https://img.shields.io/badge/release-v3.0--pro-00d2ff.svg)](https://github.com/Henrique1601/CheatCraft)
+[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://python.org)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-orange.svg)](#)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](#)
 
----
+**CheatCraft Studio** é uma plataforma Desktop completa para Windows focada em modding, criação de cheats, engenharia reversa e manipulação de memória para jogos singleplayer offline. 
 
-## ✨ Funcionalidades Principais
-
-* 🚀 **Launcher & UI Moderna (CustomTkinter)**: Interface escura moderna com temas gamer, cards dinâmicos e controle por switches.
-* 📄 **Gerador de Tabelas `.CT` (Cheat Engine)**: Exportação com 1 clique de arquivos `.CT` nativos em XML, contendo `CheatEntries`, endereços base de módulos, cadeias multiníveis de ponteiros, tipos de variáveis e scripts de auto-assembly.
-* 🔍 **Scanner de Bibliotecas Steam**: Detecção automática de jogos instalados no PC e inferência da engine utilizada (*Unity*, *Unreal Engine*, *Custom/Nativo*).
-* ⚡ **Trainer Runtime em Tempo Real (Pymem)**: Hook direto de processos, resolução de ponteiros 64-bit e loop suave de congelamento de valores (20 Hz) sem sobrecarga de CPU.
-* ⌨️ **Hotkeys Globais**: Ativação e desativação de cheats durante o jogo via teclado numérico (`Num 1` a `Num 6`), sem necessidade de Alt+Tab.
-* 🎯 **Presets Inclusos**:
-  - **Marvel's Spider-Man Remastered** (God Mode, Foco Infinito, Gadgets Ilimitados, Combo 999x, Speedhack).
-  - **Template Genérico Unity (Mono)** (Vida, Dinheiro/Moedas, Stamina).
-  - **Template Genérico Unreal Engine 4/5** (God Mode, Munição Infinita).
+Ele combina a experiência moderna e visual de ferramentas como *WeMod* com o poder técnico de exportação para tabelas nativas `.CT` do **Cheat Engine** (XML estruturado + Lua auto-attach).
 
 ---
 
-## 🛠️ Tecnologias
+## ✨ Funcionalidades Principais (v3.0 Pro)
 
-- **Python 3.10+**
-- **CustomTkinter** (Interface gráfica responsiva com tema escuro)
-- **Pymem** (Manipulação e leitura de memória de processos 64-bit no Windows)
-- **Keyboard** (Captura de atalhos globais de teclado)
-- **XML minidom / ElementTree** (Serialização de Cheat Tables .CT)
+* 🚀 **Auto-Attach Silencioso & Feedback Sonoro (`core/sound_feedback.py`)**: Conexão instantânea em segundo plano com o processo do jogo assim que ele é aberto, acompanhado de beeps sonoros sutis no padrão Windows indicando conexão e ativação de cheats.
+* ⏱️ **Speedhack Universal (`core/speedhack_controller.py`)**: Controle deslizante na interface para acelerar ou desacelerar o tempo do jogo de **0.25x** (câmera lenta para esquivas) até **5.0x / 10.0x** (pular cutscenes e grind).
+* 🤖 **AI Cheat Assistant (`core/ai_assistant.py`)**: Análise inteligente da engine do jogo (*Unity*, *Unreal Engine*, *Godot*, *C++ Nativo*) com recomendações de módulos base, offsets típicos e assinaturas AOB.
+* 🔍 **Memory Scanner Integrado (`core/memory_scanner.py`)**: First Scan e Next Scan direto no aplicativo para encontrar endereços dinâmicos na RAM sem depender de softwares de terceiros.
+* 🪟 **In-Game HUD Overlay Transparente (`core/hud_overlay.py`)**: Painel flutuante sobreposto à tela do jogo com ativação pela tecla **`[Insert]`**.
+* 🌐 **Cloud Hub de Tabelas (`core/cloud_hub.py`)**: Sincronização e download com 1 clique de presets da comunidade no GitHub.
+* 🕹️ **Módulo de Emuladores de Console (`core/emulator_manager.py`)**: Mapeamento de memória virtual para **RPCS3** (PS3), **PCSX2** (PS2), **Dolphin** (GameCube/Wii) e **Cemu** (Wii U).
+* 📄 **Gerador de Tabelas `.CT` (Cheat Engine)**: Exportação com 1 clique de arquivos `.CT` nativos em XML, contendo endereços, offsets multiníveis, tipos de variáveis e scripts de auto-assembly.
+* 📦 **Script de Build Standalone (`build_exe.bat`)**: Compilação automatizada com PyInstaller em executável nativo `.exe`.
 
 ---
 
 ## 🚀 Como Executar
 
-### 1. Instalar dependências
+### 1. Iniciar via Python
 ```powershell
 pip install -r requirements.txt
-```
-
-### 2. Iniciar o CheatCraft
-Execute com duplo clique no arquivo:
-```cmd
-iniciar_cheatcraft.bat
-```
-Ou via terminal:
-```powershell
 python launcher.py
 ```
+Ou com duplo clique em [`iniciar_cheatcraft.bat`](file:///c:/Users/Public/Downloads/scripts%20para%20jogos/iniciar_cheatcraft.bat).
 
----
-
-## 🗺️ Roadmap de Novas Melhorias
-
-- [ ] **Scanner AOB Integrado na UI**: Localização de endereços desconhecidos direto pelo app.
-- [ ] **Overlay In-Game DirectX / ImGui**: HUD flutuante semi-transparente dentro do jogo.
-- [ ] **Comunidade & Cloud Sync**: Baixar e compartilhar tabelas `.CT` e presets da comunidade.
-- [ ] **Suporte a Emuladores**: Presets para RPCS3, PCSX2, Dolphin e Yuzu/Ryujinx.
-- [ ] **Speedhack Global via DLL Hook**: Acelerar ou desacelerar o tempo do jogo diretamente na memória.
+### 2. Compilar Executável Portátil (.exe)
+Dê um duplo clique no script:
+```cmd
+build_exe.bat
+```
+O executável standalone será gerado em `dist/CheatCraft_Studio/CheatCraft_Studio.exe`.
 
 ---
 
 ## ⚖️ Aviso Legal / Disclaimer
 
-O **CheatCraft** foi desenvolvido exclusivamente para fins educacionais e uso em jogos **singleplayer offline**. Não utilize em jogos multiplayer ou com sistemas anti-cheat (Easy Anti-Cheat, BattlEye, VAC, etc.), respeitando os termos de serviço das desenvolvedoras.
+O **CheatCraft Studio** foi desenvolvido exclusivamente para fins de estudo, aprendizado de engenharia reversa e uso em jogos **singleplayer offline**. Não utilize em jogos multiplayer ou títulos com anti-cheat online.

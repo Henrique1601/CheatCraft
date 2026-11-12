@@ -54,7 +54,7 @@ class InGameHUDOverlay:
         frame = tk.Frame(self.root, bg="#12121f", highlightbackground="#00d2ff", highlightthickness=1)
         frame.pack(fill="both", expand=True, padx=2, pady=2)
 
-        # Suporte a clique-e-arraste (Draggable HUD)
+        # Suporte a clique-e-arraste (Draggable HUD em todos os componentes)
         def start_drag(event):
             self._drag_start_x = event.x
             self._drag_start_y = event.y
@@ -64,36 +64,42 @@ class InGameHUDOverlay:
             y = self.root.winfo_y() + (event.y - self._drag_start_y)
             self.root.geometry(f"+{x}+{y}")
 
-        frame.bind("<Button-1>", start_drag)
-        frame.bind("<B1-Motion>", do_drag)
+        def bind_drag(widget):
+            widget.bind("<Button-1>", start_drag, add="+")
+            widget.bind("<B1-Motion>", do_drag, add="+")
+
+        bind_drag(frame)
 
         # Header
         head = tk.Label(frame, text="⚡ CHEATCRAFT HUD PRO", fg="#00d2ff", bg="#12121f", font=("Segoe UI", 11, "bold"), cursor="fleur")
         head.pack(pady=(8, 1))
-        head.bind("<Button-1>", start_drag)
-        head.bind("<B1-Motion>", do_drag)
+        bind_drag(head)
 
         sub = tk.Label(frame, text="[INSERT] Ocultar / Exibir (Arraste para mover)", fg="#7a7a99", bg="#12121f", font=("Segoe UI", 8), cursor="fleur")
         sub.pack(pady=(0, 4))
-        sub.bind("<Button-1>", start_drag)
-        sub.bind("<B1-Motion>", do_drag)
+        bind_drag(sub)
 
         # Status & FPS Bar
         metrics_bar = tk.Frame(frame, bg="#12121f")
         metrics_bar.pack(fill="x", padx=12, pady=(0, 6))
+        bind_drag(metrics_bar)
 
         self.status_label = tk.Label(metrics_bar, text="● Conectado", fg="#00ff66", bg="#12121f", font=("Segoe UI", 9, "bold"))
         self.status_label.pack(side="left")
+        bind_drag(self.status_label)
 
         self.fps_label = tk.Label(metrics_bar, text="FPS: 60", fg="#ffcc00", bg="#12121f", font=("Consolas", 9, "bold"))
         self.fps_label.pack(side="right")
+        bind_drag(self.fps_label)
 
         # Seção Cheats
         cheats_title = tk.Label(frame, text="MODIFICADORES ATIVOS:", fg="#9999bb", bg="#12121f", font=("Segoe UI", 8, "bold"), anchor="w")
         cheats_title.pack(fill="x", padx=12, pady=(4, 2))
+        bind_drag(cheats_title)
 
         self.items_container = tk.Frame(frame, bg="#12121f")
         self.items_container.pack(fill="both", expand=True, padx=12)
+        bind_drag(self.items_container)
 
         # Barra Inferior Gamer: Mira Customizada
         footer = tk.Frame(frame, bg="#181829")
@@ -114,8 +120,9 @@ class InGameHUDOverlay:
         # Loop de atualização de FPS
         self._fps_updater()
 
+        self._insert_hotkey = None
         try:
-            keyboard.add_hotkey("insert", self.toggle_visibility, suppress=False)
+            self._insert_hotkey = keyboard.add_hotkey("insert", self.toggle_visibility, suppress=False)
         except Exception:
             pass
 
@@ -149,6 +156,13 @@ class InGameHUDOverlay:
 
     def destroy(self):
         """Fecha o HUD e limpa recursos de forma limpa."""
+        if hasattr(self, "_insert_hotkey") and self._insert_hotkey:
+            try:
+                keyboard.remove_hotkey(self._insert_hotkey)
+            except Exception:
+                pass
+            self._insert_hotkey = None
+
         if self._fps_timer_id and self.root:
             try:
                 self.root.after_cancel(self._fps_timer_id)
@@ -221,13 +235,21 @@ class InGameHUDOverlay:
         # Aplica estilos Win32 para Click-Through total (WS_EX_TRANSPARENT | WS_EX_LAYERED | WS_EX_NOACTIVATE)
         try:
             user32 = ctypes.windll.user32
-            hwnd = user32.GetParent(self.crosshair_window.winfo_id()) or self.crosshair_window.winfo_id()
+            wid = self.crosshair_window.winfo_id()
+            parent = user32.GetParent(wid)
             GWL_EXSTYLE = -20
             WS_EX_TRANSPARENT = 0x00000020
             WS_EX_LAYERED = 0x00080000
             WS_EX_NOACTIVATE = 0x08000000
-            current_style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-            user32.SetWindowLongW(hwnd, GWL_EXSTYLE, current_style | WS_EX_TRANSPARENT | WS_EX_LAYERED | WS_EX_NOACTIVATE)
+            flags = WS_EX_TRANSPARENT | WS_EX_LAYERED | WS_EX_NOACTIVATE
+
+            SetWindowLong = getattr(user32, "SetWindowLongPtrW", user32.SetWindowLongW)
+            GetWindowLong = getattr(user32, "GetWindowLongPtrW", user32.GetWindowLongW)
+
+            for hwnd in (wid, parent):
+                if hwnd:
+                    current_style = GetWindowLong(hwnd, GWL_EXSTYLE)
+                    SetWindowLong(hwnd, GWL_EXSTYLE, current_style | flags)
         except Exception as e:
             print(f"Aviso: falha ao aplicar estilos click-through na mira: {e}")
 

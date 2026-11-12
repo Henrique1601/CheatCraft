@@ -51,6 +51,12 @@ class CheatCraftApp(ctk.CTk):
         self._start_steam_scan_async()
         self._start_process_monitor_async()
 
+        self._insert_hotkey = None
+        try:
+            self._insert_hotkey = keyboard.add_hotkey("insert", lambda: self.after(0, self._launch_hud), suppress=False)
+        except Exception:
+            pass
+
     def _load_presets(self):
         presets_path = os.path.join(os.path.dirname(__file__), "templates", "presets.json")
         if os.path.exists(presets_path):
@@ -281,9 +287,15 @@ class CheatCraftApp(ctk.CTk):
         self.selected_game = game_dict
         self.mem.process_name = game_dict.get("process_name", "")
         self.game_header_title.configure(text=game_dict["game_name"])
+        self.status_badge.configure(text=f"● Verificando ({self.mem.process_name})...", text_color="#ffcc00")
         self._setup_game_hotkeys()
         self._render_game_list()
         self._render_cheats_list()
+
+        # Atualiza HUD para o jogo selecionado
+        if self.hud and self.hud.root and self.selected_game:
+            hud_dict = {c["description"]: self.active_cheats.get(c["id"], False) for c in self.selected_game.get("cheats", [])}
+            self.hud.update_cheats(hud_dict)
 
     def _setup_game_hotkeys(self):
         """Desregistra atalhos anteriores e registra hotkeys globais para os cheats do jogo selecionado."""
@@ -376,6 +388,8 @@ class CheatCraftApp(ctk.CTk):
 
         self.active_cheats[cheat_id] = new_val
         if new_val:
+            # Associa com processo do jogo selecionado para isolamento de memória
+            cheat["_process_name"] = self.selected_game.get("process_name", "") if self.selected_game else ""
             self.active_cheat_objects[cheat_id] = cheat
         else:
             self.active_cheat_objects.pop(cheat_id, None)
@@ -397,9 +411,9 @@ class CheatCraftApp(ctk.CTk):
         else:
             SoundFeedback.play_cheat_off()
 
-        # Atualiza HUD em tempo real
-        if self.hud and self.hud.root:
-            hud_dict = {c["description"]: True for c in self.active_cheat_objects.values()}
+        # Atualiza HUD em tempo real exibindo lista completa com estados ATIVO / OFF
+        if self.hud and self.hud.root and self.selected_game:
+            hud_dict = {c["description"]: self.active_cheats.get(c["id"], False) for c in self.selected_game.get("cheats", [])}
             self.hud.update_cheats(hud_dict)
 
     def _start_cheat_enforcement_thread(self):
@@ -409,12 +423,19 @@ class CheatCraftApp(ctk.CTk):
                 try:
                     if self.mem.is_connected and self.mem.pm:
                         active_items = list(self.active_cheat_objects.items())
+                        connected_proc = getattr(self.mem, "_connected_process_name", "").lower()
+
                         for cid, cheat in active_items:
                             if not self.active_cheats.get(cid, False):
                                 continue
 
-                            addr_spec = cheat.get("address")
-                            if not addr_spec:
+                            # Isolamento de processo: não congelar valores de outro jogo
+                            cheat_proc = cheat.get("_process_name", "").lower()
+                            if cheat_proc and connected_proc and cheat_proc != connected_proc:
+                                continue
+
+                            addr_spec = cheat.get("address", cheat.get("base_offset"))
+                            if addr_spec is None:
                                 continue
                             offsets = cheat.get("offsets", [])
                             resolved_addr = self.mem.resolve_pointer(addr_spec, offsets)
@@ -422,7 +443,7 @@ class CheatCraftApp(ctk.CTk):
                                 continue
 
                             cheat_type = str(cheat.get("type", "4 Bytes")).lower()
-                            raw_val = cheat.get("default_value")
+                            raw_val = cheat.get("default_value", cheat.get("value"))
 
                             if "float" in cheat_type:
                                 val = float(raw_val) if raw_val is not None else 100.0
@@ -565,41 +586,68 @@ class CheatCraftApp(ctk.CTk):
             val_type = type_combo.get()
 
             def _scan_worker():
-                if not self.mem.pm:
-                    def _show_err():
+                try:
+                    if not self.mem.pm:
+                        def _show_err():
+                            try:
+                                if modal.winfo_exists():
+                                    results_box.delete("1.0", "end")
+                                    results_box.insert("end", "Erro: Processo do jogo não está conectado!\n")
+                            except Exception:
+                                pass
                         try:
-                            results_box.insert("end", "Erro: Processo do jogo não está conectado!\n")
+                            if modal.winfo_exists():
+                                modal.after(0, _show_err)
                         except Exception:
                             pass
+                        return
+
+                    self.scanner.set_process(self.mem.pm)
+                    res = self.scanner.first_scan(v, val_type=val_type)
+
+                    def _show_res():
                         try:
-                            fs_btn.configure(state="normal")
-                            ns_btn.configure(state="normal")
+                            if modal.winfo_exists():
+                                results_box.delete("1.0", "end")
+                                results_box.insert("end", f"Concluído! Encontrados {len(res)} endereços.\n\n")
+                                for a in res[:30]:
+                                    results_box.insert("end", f"0x{a:08X}\n")
+                                if len(res) > 30:
+                                    results_box.insert("end", f"... e mais {len(res)-30} endereços.\n")
                         except Exception:
                             pass
-                    modal.after(0, _show_err)
-                    return
 
-                self.scanner.set_process(self.mem.pm)
-                res = self.scanner.first_scan(v, val_type=val_type)
-
-                def _show_res():
                     try:
-                        results_box.delete("1.0", "end")
-                        results_box.insert("end", f"Concluído! Encontrados {len(res)} endereços.\n\n")
-                        for a in res[:30]:
-                            results_box.insert("end", f"0x{a:08X}\n")
-                        if len(res) > 30:
-                            results_box.insert("end", f"... e mais {len(res)-30} endereços.\n")
+                        if modal.winfo_exists():
+                            modal.after(0, _show_res)
                     except Exception:
                         pass
-                    finally:
+                except Exception as ex:
+                    def _show_exc():
                         try:
-                            fs_btn.configure(state="normal")
-                            ns_btn.configure(state="normal")
+                            if modal.winfo_exists():
+                                results_box.delete("1.0", "end")
+                                results_box.insert("end", f"Erro durante First Scan: {ex}\n")
                         except Exception:
                             pass
-
-                modal.after(0, _show_res)
+                    try:
+                        if modal.winfo_exists():
+                            modal.after(0, _show_exc)
+                    except Exception:
+                        pass
+                finally:
+                    def _reenable():
+                        try:
+                            if modal.winfo_exists():
+                                fs_btn.configure(state="normal")
+                                ns_btn.configure(state="normal")
+                        except Exception:
+                            pass
+                    try:
+                        if modal.winfo_exists():
+                            modal.after(0, _reenable)
+                    except Exception:
+                        pass
 
             threading.Thread(target=_scan_worker, daemon=True).start()
 
@@ -614,26 +662,67 @@ class CheatCraftApp(ctk.CTk):
             val_type = type_combo.get()
 
             def _next_worker():
-                res = self.scanner.next_scan(v, val_type=val_type)
-
-                def _show_res():
-                    try:
-                        results_box.delete("1.0", "end")
-                        results_box.insert("end", f"Concluído! Restaram {len(res)} endereços filtrados:\n\n")
-                        for a in res[:30]:
-                            results_box.insert("end", f"0x{a:08X}\n")
-                        if len(res) > 30:
-                            results_box.insert("end", f"... e mais {len(res)-30} endereços.\n")
-                    except Exception:
-                        pass
-                    finally:
+                try:
+                    if not self.mem.pm:
+                        def _show_err():
+                            try:
+                                if modal.winfo_exists():
+                                    results_box.delete("1.0", "end")
+                                    results_box.insert("end", "Erro: Processo do jogo não está conectado!\n")
+                            except Exception:
+                                pass
                         try:
-                            fs_btn.configure(state="normal")
-                            ns_btn.configure(state="normal")
+                            if modal.winfo_exists():
+                                modal.after(0, _show_err)
+                        except Exception:
+                            pass
+                        return
+
+                    res = self.scanner.next_scan(v, val_type=val_type)
+
+                    def _show_res():
+                        try:
+                            if modal.winfo_exists():
+                                results_box.delete("1.0", "end")
+                                results_box.insert("end", f"Concluído! Restaram {len(res)} endereços filtrados:\n\n")
+                                for a in res[:30]:
+                                    results_box.insert("end", f"0x{a:08X}\n")
+                                if len(res) > 30:
+                                    results_box.insert("end", f"... e mais {len(res)-30} endereços.\n")
                         except Exception:
                             pass
 
-                modal.after(0, _show_res)
+                    try:
+                        if modal.winfo_exists():
+                            modal.after(0, _show_res)
+                    except Exception:
+                        pass
+                except Exception as ex:
+                    def _show_exc():
+                        try:
+                            if modal.winfo_exists():
+                                results_box.delete("1.0", "end")
+                                results_box.insert("end", f"Erro durante Next Scan: {ex}\n")
+                        except Exception:
+                            pass
+                    try:
+                        if modal.winfo_exists():
+                            modal.after(0, _show_exc)
+                    except Exception:
+                        pass
+                finally:
+                    def _reenable():
+                        try:
+                            if modal.winfo_exists():
+                                fs_btn.configure(state="normal")
+                                ns_btn.configure(state="normal")
+                        except Exception:
+                            pass
+                    try:
+                        if modal.winfo_exists():
+                            modal.after(0, _reenable)
+                    except Exception:
+                        pass
 
             threading.Thread(target=_next_worker, daemon=True).start()
 
@@ -779,6 +868,36 @@ class CheatCraftApp(ctk.CTk):
                 time.sleep(1.5)
 
         threading.Thread(target=monitor, daemon=True).start()
+
+    def destroy(self):
+        """Limpa hotkeys globais, encerra HUD/mira e desconecta com segurança."""
+        for hk in self._registered_hotkeys:
+            try:
+                keyboard.remove_hotkey(hk)
+            except Exception:
+                pass
+        self._registered_hotkeys.clear()
+
+        if hasattr(self, "_insert_hotkey") and self._insert_hotkey:
+            try:
+                keyboard.remove_hotkey(self._insert_hotkey)
+            except Exception:
+                pass
+            self._insert_hotkey = None
+
+        if hasattr(self, "hud") and self.hud:
+            try:
+                self.hud.destroy()
+            except Exception:
+                pass
+
+        if hasattr(self, "mem") and self.mem:
+            try:
+                self.mem.disconnect()
+            except Exception:
+                pass
+
+        super().destroy()
 
 if __name__ == "__main__":
     app = CheatCraftApp()

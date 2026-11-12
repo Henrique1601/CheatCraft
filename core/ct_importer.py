@@ -67,6 +67,10 @@ class CheatTableImporter:
                         # Invertemos para a ordem top-down (ponteiro base primeiro) do CheatCraft.
                         offsets.reverse()
 
+                    # Extrai script Auto Assembler se existir
+                    script_el = entry.find("AssemblerScript")
+                    script_text = script_el.text if script_el is not None and script_el.text else ""
+
                     # Extrai hotkey se houver
                     hotkey = f"NUMPAD {min(idx + 1, 9)}"
                     hotkeys_el = entry.find("Hotkeys")
@@ -75,14 +79,19 @@ class CheatTableImporter:
                         if hk_key is not None and hk_key.text:
                             hotkey = hk_key.text
 
-                    cheats.append({
+                    cheat_dict = {
                         "id": f"imported_{idx+1}",
                         "description": desc,
                         "type": var_type,
                         "address": addr,
                         "offsets": offsets,
-                        "hotkey": hotkey
-                    })
+                        "hotkey": hotkey,
+                        "default_value": 100.0 if "float" in var_type.lower() else (999 if any(t in var_type.lower() for t in ["byte", "int", "binary"]) else 100)
+                    }
+                    if script_text or var_type == "Auto Assembler Script":
+                        cheat_dict["script"] = script_text
+
+                    cheats.append(cheat_dict)
 
             return {
                 "id": clean_name.lower().replace(" ", "_").replace("'", ""),

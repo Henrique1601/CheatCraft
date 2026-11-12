@@ -58,8 +58,17 @@ class MemoryEngine:
         try:
             self.pm = pymem.Pymem(self.process_name)
             module = pymem.process.module_from_name(self.pm.process_handle, self.process_name)
+            if not module and not self.process_name.lower().endswith(".exe"):
+                module = pymem.process.module_from_name(self.pm.process_handle, self.process_name + ".exe")
             if module:
                 self.base_address = module.lpBaseOfDll
+            else:
+                try:
+                    self.base_address = self.pm.base_address
+                except Exception:
+                    self.base_address = 0
+
+            if self.base_address > 0:
                 self.is_connected = True
                 self._connected_process_name = self.process_name
                 self._module_cache[self.process_name.lower()] = self.base_address
@@ -88,6 +97,7 @@ class MemoryEngine:
         """
         Retrieves the base address of a loaded module (e.g. 'GTA5.exe', 'UnityPlayer.dll').
         Uses internal caching to avoid redundant module enumeration calls.
+        Supports case-insensitivity and automatic extension matching.
         """
         if not self.is_connected:
             return None
@@ -96,14 +106,20 @@ class MemoryEngine:
         if clean_name in self._module_cache:
             return self._module_cache[clean_name]
 
-        # Fallback: if matches current process name and base_address is known
-        if clean_name == self.process_name.lower() and self.base_address > 0:
-            self._module_cache[clean_name] = self.base_address
-            return self.base_address
+        proc_lower = self.process_name.lower()
+        # Fallback: if matches current process name (with or without .exe) and base_address is known
+        if self.base_address > 0:
+            if clean_name == proc_lower or (not clean_name.endswith(('.exe', '.dll')) and clean_name + ".exe" == proc_lower):
+                self._module_cache[clean_name] = self.base_address
+                return self.base_address
 
         if self.pm and self.pm.process_handle:
             try:
                 mod = pymem.process.module_from_name(self.pm.process_handle, clean_name)
+                if not mod and not clean_name.endswith(('.exe', '.dll')):
+                    mod = pymem.process.module_from_name(self.pm.process_handle, clean_name + ".exe")
+                    if not mod:
+                        mod = pymem.process.module_from_name(self.pm.process_handle, clean_name + ".dll")
                 if mod:
                     self._module_cache[clean_name] = mod.lpBaseOfDll
                     return mod.lpBaseOfDll
@@ -115,7 +131,8 @@ class MemoryEngine:
     def parse_address(self, address: Union[str, int]) -> Optional[int]:
         """
         Universal address parser for:
-        - Module strings with offset: '"GTA5.exe"+01C3A100', '"UnityPlayer.dll"+015F3C00', 'game.exe+0x1000'
+        - Module strings with offset: '"GTA5.exe"+01C3A100', '\'UnityPlayer.dll\'+015F3C00', 'game.exe+0x1000'
+        - Relative offsets without module: '+01C3A100', '+0x1000'
         - Raw hex strings: '0x140001000', '140001000'
         - Integers: 0x140001000
         """
@@ -128,12 +145,12 @@ class MemoryEngine:
         if not addr_str:
             return None
 
-        # Pattern: "module.ext"+offset or module.ext+offset (with + or -)
-        m = re.match(r'^(?:"([^"]+)"|([a-zA-Z0-9_\.\-]+))\s*([+-])\s*(0x[0-9a-fA-F]+|[0-9a-fA-F]+)$', addr_str)
+        # Pattern: "module.ext"+offset or 'module.ext'+offset or module.ext+offset (with + or -)
+        m = re.match(r'^(?:"([^"]+)"|\'([^\']+)\'|([a-zA-Z0-9_\.\-]+))\s*([+-])\s*(0x[0-9a-fA-F]+|[0-9a-fA-F]+)$', addr_str)
         if m:
-            mod_name = m.group(1) or m.group(2)
-            sign = m.group(3)
-            raw_off = m.group(4)
+            mod_name = m.group(1) or m.group(2) or m.group(3)
+            sign = m.group(4)
+            raw_off = m.group(5)
             try:
                 offset = int(raw_off, 16)
             except ValueError:
@@ -146,6 +163,21 @@ class MemoryEngine:
             if base is None:
                 return None
             return (base + offset) if sign == '+' else (base - offset)
+
+        # Standalone relative offset without module: "+01C3A100", "+0x1000", "-0x50"
+        m_rel = re.match(r'^([+-])\s*(0x[0-9a-fA-F]+|[0-9a-fA-F]+)$', addr_str)
+        if m_rel:
+            sign = m_rel.group(1)
+            raw_off = m_rel.group(2)
+            try:
+                offset = int(raw_off, 16)
+            except ValueError:
+                try:
+                    offset = int(raw_off, 0)
+                except ValueError:
+                    return None
+            if self.base_address > 0:
+                return (self.base_address + offset) if sign == '+' else (self.base_address - offset)
 
         # Standalone module name: "GTA5.exe" or UnityPlayer.dll
         clean_name = addr_str.strip('"\'')
@@ -163,10 +195,11 @@ class MemoryEngine:
             except ValueError:
                 return None
 
-    def resolve_pointer(self, base: Union[str, int], offsets: Optional[List[int]] = None) -> Optional[int]:
+    def resolve_pointer(self, base: Union[str, int], offsets: Optional[List[Union[int, str]]] = None) -> Optional[int]:
         """
         Resolves multi-level 64-bit or 32-bit pointer chains.
-        Supports both module address strings ('"GTA5.exe"+01C3A100') and raw base offsets.
+        Supports module address strings ('"GTA5.exe"+01C3A100'), raw base offsets,
+        and handles both integer and string representations of offsets.
         Example: [[base_address + base_offset] + off1] + off2 ...
         """
         if not self.is_connected:
@@ -191,16 +224,37 @@ class MemoryEngine:
         if not offsets:
             return current_addr
 
+        # Sanitize and convert offsets to integers
+        parsed_offsets: List[int] = []
+        for off in offsets:
+            if isinstance(off, int):
+                parsed_offsets.append(off)
+            elif isinstance(off, str):
+                off_clean = off.strip()
+                try:
+                    parsed_offsets.append(int(off_clean, 16) if "0x" in off_clean.lower() else int(off_clean))
+                except ValueError:
+                    try:
+                        parsed_offsets.append(int(off_clean, 16))
+                    except ValueError:
+                        return None
+            else:
+                return None
+
+        if not parsed_offsets:
+            return current_addr
+
         if not self.pm:
             return None
 
         try:
             # Walk through pointer chain
-            for offset in offsets[:-1]:
+            for offset in parsed_offsets[:-1]:
                 if self.is_64_bit:
                     current_addr = self.pm.read_longlong(current_addr)
                 else:
-                    current_addr = self.pm.read_int(current_addr)
+                    raw_val = self.pm.read_int(current_addr)
+                    current_addr = (raw_val & 0xFFFFFFFF) if raw_val is not None else None
 
                 if not current_addr or current_addr <= 0:
                     return None
@@ -209,11 +263,12 @@ class MemoryEngine:
             if self.is_64_bit:
                 final_addr = self.pm.read_longlong(current_addr)
             else:
-                final_addr = self.pm.read_int(current_addr)
+                raw_val = self.pm.read_int(current_addr)
+                final_addr = (raw_val & 0xFFFFFFFF) if raw_val is not None else None
 
             if not final_addr or final_addr <= 0:
                 return None
-            return final_addr + offsets[-1]
+            return final_addr + parsed_offsets[-1]
         except Exception:
             # Memory read violation or unallocated address
             return None

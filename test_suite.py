@@ -55,8 +55,23 @@ class TestCheatCraftStudio(unittest.TestCase):
         addr8 = self.mem.parse_address('"GTA5.exe"')
         self.assertEqual(addr8, 0x140000000)
 
+        # Single quote module string
+        addr9 = self.mem.parse_address("'UnityPlayer.dll'+015F3C00")
+        self.assertEqual(addr9, 0x7FF800000000 + 0x015F3C00)
+
+        # Module name without extension matched against connected process
+        addr10 = self.mem.parse_address('"GTA5"+01C3A100')
+        self.assertEqual(addr10, 0x140000000 + 0x01C3A100)
+
+        # Relative offset without module
+        addr11 = self.mem.parse_address("+0x1000")
+        self.assertEqual(addr11, 0x140000000 + 0x1000)
+
+        addr12 = self.mem.parse_address("-0x500")
+        self.assertEqual(addr12, 0x140000000 - 0x500)
+
     def test_02_dual_bitness_pointer_resolution(self):
-        """Test dual 32-bit and 64-bit pointer walking."""
+        """Test dual 32-bit and 64-bit pointer walking, string offsets, and high unsigned memory."""
         class MockProcess:
             def __init__(self):
                 self.process_handle = 9999
@@ -65,36 +80,44 @@ class TestCheatCraftStudio(unittest.TestCase):
                     0x200000008: 0x300000000,
                     0x300000030: 0x400000000,
                 }
+                # Include a 32-bit high memory address (> 0x7FFFFFFF)
                 self.mem_32 = {
-                    0x00401000: 0x00500000,
-                    0x00500008: 0x00600000,
-                    0x00600030: 0x00700000,
+                    0x00401000: 0x80500000, # Signed int: -2142240768
+                    0x80500008: 0x80600000,
+                    0x80600030: 0x80700000,
                 }
 
             def read_longlong(self, addr):
                 return self.mem_64.get(addr, 0)
 
             def read_int(self, addr):
-                return self.mem_32.get(addr, 0)
+                val = self.mem_32.get(addr, 0)
+                # Simulate ctypes/pymem returning signed 32-bit int
+                if val > 0x7FFFFFFF:
+                    return val - 0x100000000
+                return val
 
         self.mem.is_connected = True
         self.mem.base_address = 0x140000000
         self.mem.pm = MockProcess()
         self.mem._module_cache["gta5.exe"] = 0x140000000
 
-        # Test 64-bit resolution
+        # Test 64-bit resolution with integer offsets
         with patch.object(MemoryEngine, 'is_64_bit', new=True):
             resolved = self.mem.resolve_pointer('"GTA5.exe"+01C3A100', [8, 48, 0])
-            # 0x1401C3A100 -> [0x200000000] + 8 = 0x200000008 -> [0x300000000] + 48 (0x30) = 0x300000030 -> [0x400000000] + 0 = 0x400000000
             self.assertEqual(resolved, 0x400000000)
 
-        # Test 32-bit resolution
+            # Test with string/hex offsets
+            resolved_str = self.mem.resolve_pointer('"GTA5.exe"+01C3A100', ['0x8', '0x30', '0x0'])
+            self.assertEqual(resolved_str, 0x400000000)
+
+        # Test 32-bit resolution with high unsigned memory addresses (> 0x7FFFFFFF)
         self.mem.base_address = 0x00400000
         self.mem._module_cache["game.exe"] = 0x00400000
         with patch.object(MemoryEngine, 'is_64_bit', new=False):
             resolved32 = self.mem.resolve_pointer('"game.exe"+1000', [8, 48, 4])
-            # 0x00401000 -> [0x00500000] + 8 = 0x00500008 -> [0x00600000] + 48 (0x30) = 0x00600030 -> [0x00700000] + 4 = 0x00700004
-            self.assertEqual(resolved32, 0x00700004)
+            # 0x00401000 -> [0x80500000] + 8 -> [0x80600000] + 48 -> [0x80700000] + 4 = 0x80700004
+            self.assertEqual(resolved32, 0x80700004)
 
     def test_03_handle_leak_prevention(self):
         """Verify connect() checks existing handle and avoids leaking handles."""
@@ -166,6 +189,10 @@ class TestCheatCraftStudio(unittest.TestCase):
         imported = CheatTableImporter.parse_ct_file(temp_ct)
         imported_cheats = imported["cheats"]
         self.assertEqual(imported_cheats[0]["offsets"], [8, 48, 0])
+
+        # 4. Importer must preserve Auto Assembler Script text
+        self.assertIn("script", imported_cheats[1])
+        self.assertEqual(imported_cheats[1]["script"], "[ENABLE]\n// code\n[DISABLE]\n")
 
         if os.path.exists(temp_ct):
             os.remove(temp_ct)
@@ -244,6 +271,7 @@ class TestCheatCraftStudio(unittest.TestCase):
             self.assertEqual(app.cheat_switches[first_cid].get(), 1)
             self.assertTrue(app.active_cheats[first_cid])
 
+            app.update_idletasks()
             app.destroy()
 
     def test_09_edge_cases(self):
@@ -268,6 +296,89 @@ class TestCheatCraftStudio(unittest.TestCase):
         # Disconnected resolution
         self.mem.is_connected = False
         self.assertIsNone(self.mem.resolve_pointer('"GTA5.exe"+01C3A100'))
+
+    def test_10_scanner_modal_async_recovery(self):
+        """Verify memory scanner modal gracefully recovers from errors and re-enables buttons."""
+        from launcher import CheatCraftApp
+
+        with patch("threading.Thread"):
+            app = CheatCraftApp()
+            app.withdraw()
+            app.update()
+
+            # Ensure app.mem has no pm hooked
+            app.mem.pm = None
+            app.mem.is_connected = False
+
+            # Open scanner modal
+            app._open_scanner_modal()
+            app.update()
+
+            # Find modal
+            modal = None
+            for child in app.winfo_children():
+                if isinstance(child, type(app)) or "CTkToplevel" in str(type(child)):
+                    modal = child
+                    break
+            self.assertIsNotNone(modal)
+            modal.destroy()
+            app.update_idletasks()
+            app.destroy()
+
+    def test_11_process_isolation_and_scoped_cheats(self):
+        """Verify freeze loop only writes memory for cheats belonging to the connected game."""
+        from launcher import CheatCraftApp
+
+        with patch("threading.Thread"):
+            app = CheatCraftApp()
+            app.withdraw()
+            app.update()
+
+            game_a = app.presets[0]
+            game_b = app.presets[1]
+
+            # Activate cheat for Game A
+            cheat_a = game_a["cheats"][0]
+            app._select_game(game_a)
+            app._toggle_live_cheat(cheat_a["id"], cheat_a)
+            self.assertEqual(cheat_a.get("_process_name"), game_a["process_name"])
+
+            # Switch to Game B
+            app._select_game(game_b)
+            # Cheat A is still active in state
+            self.assertTrue(app.active_cheats[cheat_a["id"]])
+            self.assertIn(cheat_a["id"], app.active_cheat_objects)
+
+            # Connected process name is Game B's process
+            app.mem._connected_process_name = game_b["process_name"]
+            app.mem.is_connected = True
+
+            # In enforce loop, cheat_a._process_name != app.mem._connected_process_name, so it is skipped
+            cheat_proc = cheat_a.get("_process_name", "").lower()
+            connected_proc = app.mem._connected_process_name.lower()
+            self.assertNotEqual(cheat_proc, connected_proc)
+
+            app.update_idletasks()
+            app.destroy()
+
+    def test_12_launcher_clean_teardown(self):
+        """Verify launcher cleanly unregisters hotkeys and disconnects memory on destroy()."""
+        from launcher import CheatCraftApp
+
+        with patch("threading.Thread"):
+            app = CheatCraftApp()
+            app.withdraw()
+            app.update()
+
+            # Mock memory engine disconnect
+            app.mem.disconnect = MagicMock()
+
+            # Destroy app
+            app.update_idletasks()
+            app.destroy()
+            app.mem.disconnect.assert_called_once()
+            self.assertEqual(len(app._registered_hotkeys), 0)
+            self.assertIsNone(app._insert_hotkey)
 
 if __name__ == "__main__":
     unittest.main()

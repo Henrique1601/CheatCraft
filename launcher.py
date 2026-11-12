@@ -16,6 +16,8 @@ from core.emulator_manager import EmulatorManager
 from core.sound_feedback import SoundFeedback
 from core.speedhack_controller import SpeedhackController
 from core.ai_assistant import AIAssistantEngine
+from core.save_vault import SaveGameVault
+from core.pattern_scanner import PatternScanner
 from memory_engine import MemoryEngine
 
 ctk.set_appearance_mode("dark")
@@ -31,6 +33,7 @@ class CheatCraftApp(ctk.CTk):
 
         # Estados e Dados
         self.presets = self._load_presets()
+        self.search_filter = ""
         self.selected_game = self.presets[0] if self.presets else None
         self.detected_games = []
         self.active_cheats = {}
@@ -130,6 +133,16 @@ class CheatCraftApp(ctk.CTk):
             text_color="#9090b0"
         )
         sec_title.pack(padx=20, pady=(4, 2), anchor="w")
+
+        # Campo de Busca Rápida
+        self.search_entry = ctk.CTkEntry(
+            sidebar,
+            placeholder_text="🔍 Buscar jogo ou engine...",
+            height=28,
+            font=ctk.CTkFont(size=11)
+        )
+        self.search_entry.pack(padx=16, pady=(0, 6), fill="x")
+        self.search_entry.bind("<KeyRelease>", self._on_search_changed)
 
         self.games_scroll = ctk.CTkScrollableFrame(sidebar, fg_color="transparent")
         self.games_scroll.pack(fill="both", expand=True, padx=10, pady=4)
@@ -231,25 +244,37 @@ class CheatCraftApp(ctk.CTk):
             text="📄 Gerar Tabela .CT",
             fg_color="#0080ff",
             hover_color="#0066cc",
-            font=ctk.CTkFont(size=13, weight="bold"),
+            font=ctk.CTkFont(size=12, weight="bold"),
             command=self._export_cheat_table
         )
-        export_ct_btn.pack(side="left", padx=(0, 10))
+        export_ct_btn.pack(side="left", padx=(0, 6))
+
+        save_vault_btn = ctk.CTkButton(
+            actions_bar,
+            text="💾 Save Vault",
+            fg_color="#443366",
+            hover_color="#5a4488",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            command=self._open_save_vault_modal
+        )
+        save_vault_btn.pack(side="left", padx=(0, 6))
 
         mem_scan_btn = ctk.CTkButton(
             actions_bar,
-            text="🔍 Memory Scanner Integrado",
+            text="🔍 Memory Scanner",
             fg_color="#00a86b",
             hover_color="#008f5a",
+            font=ctk.CTkFont(size=12),
             command=self._open_scanner_modal
         )
-        mem_scan_btn.pack(side="left", padx=(0, 10))
+        mem_scan_btn.pack(side="left", padx=(0, 6))
 
         add_custom_btn = ctk.CTkButton(
             actions_bar,
             text="➕ Adicionar Cheat",
             fg_color="#2c2c40",
             hover_color="#3a3a55",
+            font=ctk.CTkFont(size=12),
             command=self._open_add_cheat_modal
         )
         add_custom_btn.pack(side="left")
@@ -263,11 +288,33 @@ class CheatCraftApp(ctk.CTk):
         self.cheats_container.grid(row=3, column=0, sticky="nsew", padx=20, pady=(4, 16))
         self._render_cheats_list()
 
+    def _on_search_changed(self, event=None):
+        self.search_filter = self.search_entry.get().strip().lower()
+        self._render_game_list()
+
     def _render_game_list(self):
         for widget in self.games_scroll.winfo_children():
             widget.destroy()
 
-        for g in self.presets:
+        filtered_presets = [
+            g for g in self.presets
+            if not self.search_filter or
+               self.search_filter in g.get("game_name", "").lower() or
+               self.search_filter in g.get("engine_type", "").lower() or
+               self.search_filter in g.get("process_name", "").lower()
+        ]
+
+        if not filtered_presets:
+            empty_lbl = ctk.CTkLabel(
+                self.games_scroll,
+                text="Nenhum jogo encontrado",
+                text_color="#6e6e8a",
+                font=ctk.CTkFont(size=11)
+            )
+            empty_lbl.pack(pady=10)
+            return
+
+        for g in filtered_presets:
             is_active = self.selected_game and self.selected_game.get("id") == g.get("id")
             is_emu = EmulatorManager.is_emulator(g.get("process_name", ""))
             icon = "🕹️" if is_emu else "🎮"
@@ -366,8 +413,23 @@ class CheatCraftApp(ctk.CTk):
             details.pack(fill="x")
 
             is_active = self.active_cheats.get(cid, False)
+            # Botões de Ação do Cheat (Excluir e Editar)
+            actions_box = ctk.CTkFrame(card, fg_color="transparent")
+            actions_box.pack(side="right", padx=(0, 10))
+
+            del_btn = ctk.CTkButton(
+                actions_box,
+                text="🗑️",
+                width=32,
+                height=28,
+                fg_color="#3a2228",
+                hover_color="#552228",
+                command=lambda c=cheat: self._delete_cheat(c)
+            )
+            del_btn.pack(side="right", padx=(4, 0))
+
             switch = ctk.CTkSwitch(
-                card,
+                actions_box,
                 text="",
                 progress_color="#00d2ff",
                 command=lambda c_id=cid, c=cheat: self._toggle_live_cheat(c_id, c)
@@ -376,7 +438,7 @@ class CheatCraftApp(ctk.CTk):
                 switch.select()
             else:
                 switch.deselect()
-            switch.pack(side="right", padx=16)
+            switch.pack(side="right", padx=(0, 4))
             self.cheat_switches[cid] = switch
 
     def _toggle_live_cheat(self, cheat_id, cheat, force_val=None):
@@ -459,6 +521,109 @@ class CheatCraftApp(ctk.CTk):
                 time.sleep(0.05) # 20 Hz (adequado para freeze sem sobrecarga de CPU)
 
         threading.Thread(target=_enforce_loop, daemon=True).start()
+
+    def _delete_cheat(self, cheat):
+        """Remove o cheat do jogo ativo com confirmação."""
+        if not self.selected_game:
+            return
+        desc = cheat.get("description", "Cheat")
+        if messagebox.askyesno("Excluir Cheat", f"Tem certeza que deseja remover o cheat:\n'{desc}'?"):
+            cid = cheat["id"]
+            if self.active_cheats.get(cid):
+                self._toggle_live_cheat(cid, cheat, force_val=False)
+
+            self.selected_game["cheats"] = [c for c in self.selected_game.get("cheats", []) if c["id"] != cid]
+            self._save_presets()
+            self._render_cheats_list()
+
+    def _open_save_vault_modal(self):
+        """Abre janela para backup e restauração rápida de saves do jogo."""
+        if not self.selected_game:
+            return
+
+        game_id = self.selected_game.get("id", "")
+        game_name = self.selected_game.get("game_name", "")
+
+        modal = ctk.CTkToplevel(self)
+        modal.title(f"💾 Save Game Vault - {game_name}")
+        modal.geometry("540x440")
+        modal.resizable(False, False)
+
+        header_lbl = ctk.CTkLabel(
+            modal,
+            text=f"Gerenciador de Saves: {game_name}",
+            font=ctk.CTkFont(size=15, weight="bold"),
+            text_color="#00d2ff"
+        )
+        header_lbl.pack(pady=(15, 4), padx=20, anchor="w")
+
+        save_loc = SaveGameVault.find_save_folder(game_id)
+        loc_str = save_loc if save_loc else "Pasta de Save não detectada automaticamente (você pode selecionar)"
+        loc_lbl = ctk.CTkLabel(modal, text=f"Local do Save: {loc_str}", font=ctk.CTkFont(size=10), text_color="#8888aa", wraplength=500, justify="left")
+        loc_lbl.pack(padx=20, pady=(0, 10), anchor="w")
+
+        # Botão Criar Backup Agora
+        btn_frame = ctk.CTkFrame(modal, fg_color="transparent")
+        btn_frame.pack(fill="x", padx=20, pady=5)
+
+        backups_box = ctk.CTkScrollableFrame(modal, label_text="BACKUPS DISPONÍVEIS", height=200)
+        backups_box.pack(fill="both", expand=True, padx=20, pady=10)
+
+        def refresh_backups_list():
+            for widget in backups_box.winfo_children():
+                widget.destroy()
+
+            b_list = SaveGameVault.list_backups(game_id)
+            if not b_list:
+                ctk.CTkLabel(backups_box, text="Nenhum backup criado ainda.", text_color="#666688").pack(pady=20)
+                return
+
+            for b in b_list:
+                row = ctk.CTkFrame(backups_box, corner_radius=6, fg_color=("#222234", "#191928"))
+                row.pack(fill="x", pady=3, padx=2)
+
+                lbl = ctk.CTkLabel(row, text=f"{b['name']} ({b['date']})", font=ctk.CTkFont(size=11), anchor="w")
+                lbl.pack(side="left", padx=10, pady=6)
+
+                rst_btn = ctk.CTkButton(
+                    row,
+                    text="Restaurar",
+                    width=70,
+                    height=24,
+                    fg_color="#008066",
+                    hover_color="#00a382",
+                    font=ctk.CTkFont(size=10, weight="bold"),
+                    command=lambda p=b['path']: do_restore(p)
+                )
+                rst_btn.pack(side="right", padx=6, pady=6)
+
+        def do_backup():
+            res = SaveGameVault.create_backup(game_id, custom_save_dir=save_loc)
+            if res["success"]:
+                messagebox.showinfo("Backup Criado!", res["message"])
+                refresh_backups_list()
+            else:
+                messagebox.showerror("Erro de Backup", res["message"])
+
+        def do_restore(b_path):
+            if messagebox.askyesno("Restaurar SaveGame", "Tem certeza que deseja sobrescrever o save atual do jogo com este backup?"):
+                res = SaveGameVault.restore_backup(game_id, b_path, custom_save_dir=save_loc)
+                if res["success"]:
+                    messagebox.showinfo("Sucesso!", res["message"])
+                else:
+                    messagebox.showerror("Erro", res["message"])
+
+        create_btn = ctk.CTkButton(
+            btn_frame,
+            text="💾 Criar Ponto de Restauração Agora",
+            fg_color="#553388",
+            hover_color="#6e44aa",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            command=do_backup
+        )
+        create_btn.pack(fill="x")
+
+        refresh_backups_list()
 
     def _import_external_ct(self):
         """Permite selecionar qualquer arquivo .CT baixado da internet e importar os cheats para o catálogo."""

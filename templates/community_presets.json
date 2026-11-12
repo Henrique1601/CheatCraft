@@ -1,0 +1,58 @@
+{
+  "presets": [
+    {
+      "id": "eldenring",
+      "game_name": "Elden Ring (Community)",
+      "process_name": "eldenring.exe",
+      "cheats": [
+        {
+          "id": "infinite_hp",
+          "description": "Vida Infinita (God Mode)",
+          "type": "Float",
+          "address": "\"eldenring.exe\"+03DF1A00",
+          "offsets": [64, 24, 0],
+          "hotkey": "NUMPAD 1"
+        },
+        {
+          "id": "infinite_fp",
+          "description": "FP / Magia Infinita",
+          "type": "Float",
+          "address": "\"eldenring.exe\"+03DF1A00",
+          "offsets": [64, 24, 8],
+          "hotkey": "NUMPAD 2"
+        },
+        {
+          "id": "infinite_runes",
+          "description": "Runas Ilimitadas (999.999)",
+          "type": "4 Bytes",
+          "address": "\"eldenring.exe\"+03DF1A00",
+          "offsets": [64, 24, 16],
+          "hotkey": "NUMPAD 3"
+        }
+      ]
+    },
+    {
+      "id": "rpcs3_god_of_war",
+      "game_name": "God of War III (RPCS3 Emulator)",
+      "process_name": "rpcs3.exe",
+      "cheats": [
+        {
+          "id": "gow_hp",
+          "description": "Kratos - Vida Infinita",
+          "type": "Float",
+          "address": "\"rpcs3.exe\"+02A00000",
+          "offsets": [16, 4],
+          "hotkey": "NUMPAD 1"
+        },
+        {
+          "id": "gow_orbs",
+          "description": "Orbes Vermelhos Máximos",
+          "type": "4 Bytes",
+          "address": "\"rpcs3.exe\"+02A00000",
+          "offsets": [16, 8],
+          "hotkey": "NUMPAD 2"
+        }
+      ]
+    }
+  ]
+}

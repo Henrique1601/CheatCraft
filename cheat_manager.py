@@ -107,7 +107,8 @@ class CheatManager:
         """Executes a single value assignment."""
         if not self.mem.is_connected:
             return
-        addr = self.mem.resolve_pointer(cheat["base_offset"], cheat["offsets"])
+        addr_target = cheat.get("address", cheat.get("base_offset", 0))
+        addr = self.mem.resolve_pointer(addr_target, cheat.get("offsets", []))
         if addr and addr > 0:
             self.mem.write_int(addr, int(cheat["value"]))
 
@@ -116,16 +117,19 @@ class CheatManager:
         while self.running:
             if self.mem.is_connected:
                 for cheat_id, cheat in self.cheats.items():
-                    if not cheat["active"]:
+                    if not cheat.get("active", False):
                         continue
 
-                    addr = self.mem.resolve_pointer(cheat["base_offset"], cheat["offsets"])
+                    addr_target = cheat.get("address", cheat.get("base_offset", 0))
+                    addr = self.mem.resolve_pointer(addr_target, cheat.get("offsets", []))
                     if not addr or addr == 0:
                         continue
 
-                    if cheat["type"] == "freeze_float":
-                        self.mem.write_float(addr, float(cheat["value"]))
-                    elif cheat["type"] == "freeze_int":
-                        self.mem.write_int(addr, int(cheat["value"]))
+                    cheat_type = cheat.get("type", "freeze_int")
+                    val = cheat.get("value", cheat.get("default_value", 0))
+                    if cheat_type in ["freeze_float", "Float"]:
+                        self.mem.write_float(addr, float(val))
+                    elif cheat_type in ["freeze_int", "4 Bytes", "int"]:
+                        self.mem.write_int(addr, int(val))
 
             time.sleep(0.05) # 20 Hz update loop (suave e sem sobrecarga de CPU)

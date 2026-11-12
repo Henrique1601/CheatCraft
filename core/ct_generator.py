@@ -45,7 +45,6 @@ class CheatTableGenerator:
             ET.SubElement(entry_el, "Description").text = f'"{entry.get("description", "Novo Cheat")}"'
             
             var_type = entry.get("type", "4 Bytes")
-            ET.SubElement(entry_el, "VariableType").text = var_type
             
             # Tratamento de Script vs Endereço/Ponteiro
             if var_type == "Auto Assembler Script" or "script" in entry:
@@ -53,16 +52,17 @@ class CheatTableGenerator:
                 script_el = ET.SubElement(entry_el, "AssemblerScript")
                 script_el.text = entry.get("script", "")
             else:
+                ET.SubElement(entry_el, "VariableType").text = var_type
                 addr = entry.get("address", f'"{process_name}"+0')
                 ET.SubElement(entry_el, "Address").text = str(addr)
                 
-                # Se possuir ponteiros / offsets
+                # O Cheat Engine espera offsets na ordem bottom-up (de baixo para cima) no XML
                 offsets = entry.get("offsets", [])
                 if offsets:
                     offsets_el = ET.SubElement(entry_el, "Offsets")
-                    for off in offsets:
+                    for off in reversed(offsets):
                         off_str = hex(off) if isinstance(off, int) else str(off)
-                        ET.SubElement(offsets_el, "Offset").text = off_str.replace("0x", "")
+                        ET.SubElement(offsets_el, "Offset").text = off_str.replace("0x", "").upper()
             
             # Hotkeys opcionais no Cheat Engine
             if "hotkey" in entry:

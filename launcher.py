@@ -2,6 +2,7 @@ import os
 import json
 import threading
 import time
+import keyboard
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
 
@@ -33,6 +34,9 @@ class CheatCraftApp(ctk.CTk):
         self.selected_game = self.presets[0] if self.presets else None
         self.detected_games = []
         self.active_cheats = {}
+        self.active_cheat_objects = {}
+        self.cheat_switches = {}
+        self._registered_hotkeys = []
         self.was_connected = False
 
         # Módulos do Core v4.0
@@ -42,6 +46,8 @@ class CheatCraftApp(ctk.CTk):
         self.speedhack = SpeedhackController(self.mem)
 
         self._build_layout()
+        self._setup_game_hotkeys()
+        self._start_cheat_enforcement_thread()
         self._start_steam_scan_async()
         self._start_process_monitor_async()
 
@@ -275,12 +281,42 @@ class CheatCraftApp(ctk.CTk):
         self.selected_game = game_dict
         self.mem.process_name = game_dict.get("process_name", "")
         self.game_header_title.configure(text=game_dict["game_name"])
+        self._setup_game_hotkeys()
         self._render_game_list()
         self._render_cheats_list()
+
+    def _setup_game_hotkeys(self):
+        """Desregistra atalhos anteriores e registra hotkeys globais para os cheats do jogo selecionado."""
+        for hk in self._registered_hotkeys:
+            try:
+                keyboard.remove_hotkey(hk)
+            except Exception:
+                pass
+        self._registered_hotkeys.clear()
+
+        if not self.selected_game or not self.selected_game.get("cheats"):
+            return
+
+        for cheat in self.selected_game["cheats"]:
+            hk_raw = cheat.get("hotkey", "")
+            if hk_raw and hk_raw.lower() not in ["none", "nenhum", ""]:
+                # Normaliza 'numpad 1' para 'num 1' aceito pelo módulo keyboard do Python
+                norm_key = hk_raw.strip().lower().replace("numpad ", "num ").replace("numpad", "num ")
+                try:
+                    hk = keyboard.add_hotkey(
+                        norm_key,
+                        lambda c=cheat: self.after(0, lambda: self._toggle_live_cheat(c["id"], c, force_val=not self.active_cheats.get(c["id"], False))),
+                        suppress=False
+                    )
+                    self._registered_hotkeys.append(hk)
+                except Exception:
+                    pass
 
     def _render_cheats_list(self):
         for widget in self.cheats_container.winfo_children():
             widget.destroy()
+
+        self.cheat_switches.clear()
 
         if not self.selected_game or not self.selected_game.get("cheats"):
             empty_lbl = ctk.CTkLabel(
@@ -292,6 +328,7 @@ class CheatCraftApp(ctk.CTk):
             return
 
         for cheat in self.selected_game["cheats"]:
+            cid = cheat["id"]
             card = ctk.CTkFrame(self.cheats_container, corner_radius=10, fg_color=("#222234", "#181826"))
             card.pack(fill="x", pady=6, padx=4)
 
@@ -316,26 +353,91 @@ class CheatCraftApp(ctk.CTk):
             )
             details.pack(fill="x")
 
+            is_active = self.active_cheats.get(cid, False)
             switch = ctk.CTkSwitch(
                 card,
                 text="",
                 progress_color="#00d2ff",
-                command=lambda cid=cheat["id"], name=cheat["description"]: self._toggle_live_cheat(cid, name)
+                command=lambda c_id=cid, c=cheat: self._toggle_live_cheat(c_id, c)
             )
+            if is_active:
+                switch.select()
+            else:
+                switch.deselect()
             switch.pack(side="right", padx=16)
+            self.cheat_switches[cid] = switch
 
-    def _toggle_live_cheat(self, cheat_id, cheat_name):
-        curr = self.active_cheats.get(cheat_name, False)
-        new_val = not curr
-        self.active_cheats[cheat_name] = new_val
+    def _toggle_live_cheat(self, cheat_id, cheat, force_val=None):
+        if force_val is not None:
+            new_val = force_val
+        else:
+            curr = self.active_cheats.get(cheat_id, False)
+            new_val = not curr
 
+        self.active_cheats[cheat_id] = new_val
+        if new_val:
+            self.active_cheat_objects[cheat_id] = cheat
+        else:
+            self.active_cheat_objects.pop(cheat_id, None)
+
+        # Sincroniza visual do switch se necessário
+        sw = self.cheat_switches.get(cheat_id)
+        if sw:
+            try:
+                if new_val and sw.get() != 1:
+                    sw.select()
+                elif not new_val and sw.get() != 0:
+                    sw.deselect()
+            except Exception:
+                pass
+
+        # Feedback sonoro assíncrono
         if new_val:
             SoundFeedback.play_cheat_on()
         else:
             SoundFeedback.play_cheat_off()
 
-        if self.hud.root:
-            self.hud.update_cheats(self.active_cheats)
+        # Atualiza HUD em tempo real
+        if self.hud and self.hud.root:
+            hud_dict = {c["description"]: True for c in self.active_cheat_objects.values()}
+            self.hud.update_cheats(hud_dict)
+
+    def _start_cheat_enforcement_thread(self):
+        """Thread daemon em segundo plano que executa freeze/write contínuo de valores na memória."""
+        def _enforce_loop():
+            while True:
+                try:
+                    if self.mem.is_connected and self.mem.pm:
+                        active_items = list(self.active_cheat_objects.items())
+                        for cid, cheat in active_items:
+                            if not self.active_cheats.get(cid, False):
+                                continue
+
+                            addr_spec = cheat.get("address")
+                            if not addr_spec:
+                                continue
+                            offsets = cheat.get("offsets", [])
+                            resolved_addr = self.mem.resolve_pointer(addr_spec, offsets)
+                            if not resolved_addr or resolved_addr <= 0:
+                                continue
+
+                            cheat_type = str(cheat.get("type", "4 Bytes")).lower()
+                            raw_val = cheat.get("default_value")
+
+                            if "float" in cheat_type:
+                                val = float(raw_val) if raw_val is not None else 100.0
+                                self.mem.write_float(resolved_addr, val)
+                            elif "double" in cheat_type:
+                                val = float(raw_val) if raw_val is not None else 100.0
+                                self.mem.write_double(resolved_addr, val)
+                            elif any(t in cheat_type for t in ["byte", "int", "binary"]):
+                                val = int(raw_val) if raw_val is not None else 999
+                                self.mem.write_int(resolved_addr, val)
+                except Exception:
+                    pass
+                time.sleep(0.05) # 20 Hz (adequado para freeze sem sobrecarga de CPU)
+
+        threading.Thread(target=_enforce_loop, daemon=True).start()
 
     def _import_external_ct(self):
         """Permite selecionar qualquer arquivo .CT baixado da internet e importar os cheats para o catálogo."""
@@ -380,7 +482,8 @@ class CheatCraftApp(ctk.CTk):
     def _launch_hud(self):
         if not self.hud.root:
             self.hud.create_window()
-            self.hud.update_cheats(self.active_cheats)
+            hud_dict = {c["description"]: True for c in self.active_cheat_objects.values()}
+            self.hud.update_cheats(hud_dict)
         self.hud.toggle_visibility()
 
     def _sync_cloud(self):
@@ -415,6 +518,7 @@ class CheatCraftApp(ctk.CTk):
             f"--- DIAGNÓSTICO E ESTRATÉGIA ---\n"
             f"{report['analysis']}\n\n"
             f"--- PADRÕES DE MEMÓRIA SUGERIDOS ---\n"
+            f"{report['patterns']}\n\n"
         )
         for p in report["patterns"]:
             content += f"• {p['name']}: {p['hint']}\n"
@@ -454,29 +558,84 @@ class CheatCraftApp(ctk.CTk):
             v = val_entry.get().strip()
             if not v:
                 return
+            fs_btn.configure(state="disabled")
+            ns_btn.configure(state="disabled")
             results_box.delete("1.0", "end")
-            results_box.insert("end", f"Buscando {v} na memória do processo...\n")
-            if self.mem.pm:
+            results_box.insert("end", f"Buscando '{v}' na memória do processo em segundo plano...\nPor favor, aguarde...\n")
+            val_type = type_combo.get()
+
+            def _scan_worker():
+                if not self.mem.pm:
+                    def _show_err():
+                        try:
+                            results_box.insert("end", "Erro: Processo do jogo não está conectado!\n")
+                        except Exception:
+                            pass
+                        try:
+                            fs_btn.configure(state="normal")
+                            ns_btn.configure(state="normal")
+                        except Exception:
+                            pass
+                    modal.after(0, _show_err)
+                    return
+
                 self.scanner.set_process(self.mem.pm)
-                res = self.scanner.first_scan(v, val_type=type_combo.get())
-                results_box.insert("end", f"Encontrados {len(res)} endereços.\n\n")
-                for a in res[:30]:
-                    results_box.insert("end", f"0x{a:08X}\n")
-                if len(res) > 30:
-                    results_box.insert("end", f"... e mais {len(res)-30} endereços.\n")
-            else:
-                results_box.insert("end", "Erro: Processo do jogo não está conectado!\n")
+                res = self.scanner.first_scan(v, val_type=val_type)
+
+                def _show_res():
+                    try:
+                        results_box.delete("1.0", "end")
+                        results_box.insert("end", f"Concluído! Encontrados {len(res)} endereços.\n\n")
+                        for a in res[:30]:
+                            results_box.insert("end", f"0x{a:08X}\n")
+                        if len(res) > 30:
+                            results_box.insert("end", f"... e mais {len(res)-30} endereços.\n")
+                    except Exception:
+                        pass
+                    finally:
+                        try:
+                            fs_btn.configure(state="normal")
+                            ns_btn.configure(state="normal")
+                        except Exception:
+                            pass
+
+                modal.after(0, _show_res)
+
+            threading.Thread(target=_scan_worker, daemon=True).start()
 
         def do_next_scan():
             v = val_entry.get().strip()
             if not v:
                 return
+            fs_btn.configure(state="disabled")
+            ns_btn.configure(state="disabled")
             results_box.delete("1.0", "end")
-            results_box.insert("end", f"Filtrando para novo valor {v}...\n")
-            res = self.scanner.next_scan(v, val_type=type_combo.get())
-            results_box.insert("end", f"Restaram {len(res)} endereços filtrados:\n\n")
-            for a in res[:30]:
-                results_box.insert("end", f"0x{a:08X}\n")
+            results_box.insert("end", f"Filtrando para novo valor '{v}' em segundo plano...\nPor favor, aguarde...\n")
+            val_type = type_combo.get()
+
+            def _next_worker():
+                res = self.scanner.next_scan(v, val_type=val_type)
+
+                def _show_res():
+                    try:
+                        results_box.delete("1.0", "end")
+                        results_box.insert("end", f"Concluído! Restaram {len(res)} endereços filtrados:\n\n")
+                        for a in res[:30]:
+                            results_box.insert("end", f"0x{a:08X}\n")
+                        if len(res) > 30:
+                            results_box.insert("end", f"... e mais {len(res)-30} endereços.\n")
+                    except Exception:
+                        pass
+                    finally:
+                        try:
+                            fs_btn.configure(state="normal")
+                            ns_btn.configure(state="normal")
+                        except Exception:
+                            pass
+
+                modal.after(0, _show_res)
+
+            threading.Thread(target=_next_worker, daemon=True).start()
 
         fs_btn = ctk.CTkButton(btn_frame, text="First Scan", fg_color="#0080ff", hover_color="#0066cc", command=do_first_scan)
         fs_btn.pack(side="left", padx=(0, 10), fill="x", expand=True)

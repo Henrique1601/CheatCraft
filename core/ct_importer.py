@@ -63,6 +63,9 @@ class CheatTableImporter:
                                         offsets.append(int(off_text))
                                     except ValueError:
                                         pass
+                        # Tabelas .CT do Cheat Engine armazenam offsets em formato bottom-up no XML.
+                        # Invertemos para a ordem top-down (ponteiro base primeiro) do CheatCraft.
+                        offsets.reverse()
 
                     # Extrai hotkey se houver
                     hotkey = f"NUMPAD {min(idx + 1, 9)}"
